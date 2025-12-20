@@ -12,11 +12,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { HAND_TIERS } from '../../../domain/hand-evaluator/constants'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 import { createDeck } from '../../../domain/deck/createDeck'
+import { RANK_NAMES } from '../../../domain/cards/constants'
 
 import { adjustBetUseCase } from '../../../application/game/usecases/adjustBet'
 import { startDealUseCase } from '../../../application/game/usecases/startDeal'
 import { resolveResultUseCase } from '../../../application/game/usecases/resolveResult'
-import { forceHandUseCase } from '../../../application/game/usecases/forceHand'
 import { applyCascadeStepUseCase } from '../../../application/game/usecases/applyCascadeStep'
 import { buildJackpotSimulationScenario } from '../../../application/game/debug/jackpotSimulation'
 import { DEFAULT_ANTE } from '../../../application/game/constants/ante'
@@ -25,6 +25,78 @@ import { nativeRng } from '../../../infrastructure/rng/nativeRng'
 import { browserClock } from '../../../infrastructure/clock/browserClock'
 
 const GAME_MODE_STORAGE_KEY = 'repoker.gameMode'
+const DEVTOOLS_STORAGE_KEY = 'repoker.devTools'
+
+function readDevToolsFlagFromStorage() {
+  try {
+    const v = window.localStorage.getItem(DEVTOOLS_STORAGE_KEY)
+    return v === '1' || v === 'true' || v === 'on'
+  } catch {
+    return false
+  }
+}
+
+function readDevToolsFlagFromQuery() {
+  try {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('dev') === '1' || params.get('devtools') === '1'
+  } catch {
+    return false
+  }
+}
+
+function isDevToolsAllowed() {
+  // dev build always allowed; prod allowed only when explicitly enabled
+  const explicit = readDevToolsFlagFromStorage() || readDevToolsFlagFromQuery()
+  return Boolean(import.meta?.env?.DEV) || explicit
+}
+
+function isDevToolsExplicitlyEnabled() {
+  return readDevToolsFlagFromStorage() || readDevToolsFlagFromQuery()
+}
+
+function cardRankLabelForLog(card) {
+  if (!card) return '?'
+  // Joker: показываем как J* (чтобы не путать с J=валет)
+  if (card.suit === 'joker' || card.rank === 15) return 'J*'
+  return RANK_NAMES[card.rank] ?? String(card.rank)
+}
+
+function formatComboSignature(evalResult, hand) {
+  if (!evalResult || !Array.isArray(hand) || hand.length !== 5) return null
+  const name = evalResult.name ?? ''
+  const idxs = Array.isArray(evalResult.winningIndices) ? evalResult.winningIndices : []
+  if (idxs.length === 0) return null
+
+  const cards = idxs.map((i) => hand[i]).filter(Boolean)
+  if (cards.length === 0) return null
+
+  const nonJokers = cards.filter((c) => c && c.suit !== 'joker' && c.rank !== 15)
+  const jokerCount = cards.length - nonJokers.length
+
+  // Для “групповых” комбинаций (pair/two pair/…/full house) хотим порядок: группы по частоте, потом по рангу.
+  const groupy = new Set(['Pair', 'Two Pair', 'Three of a Kind', 'Four of a Kind', 'Full House'])
+  const isGroupy = groupy.has(name)
+
+  if (isGroupy) {
+    const counts = new Map()
+    for (const c of nonJokers) counts.set(c.rank, (counts.get(c.rank) ?? 0) + 1)
+    const groups = [...counts.entries()].sort((a, b) => (b[1] - a[1]) || (b[0] - a[0]))
+    const parts = []
+    for (const [rank, count] of groups) {
+      const label = RANK_NAMES[rank] ?? String(rank)
+      for (let i = 0; i < count; i += 1) parts.push(label)
+    }
+    for (let i = 0; i < jokerCount; i += 1) parts.push('J*')
+    return parts.join('')
+  }
+
+  // Для “линейных” (стрит/флэш) — по убыванию ранга, джокеры в конце.
+  const sorted = [...nonJokers].sort((a, b) => b.rank - a.rank)
+  const parts = sorted.map(cardRankLabelForLog)
+  for (let i = 0; i < jokerCount; i += 1) parts.push('J*')
+  return parts.join('')
+}
 
 function readStoredGameMode() {
   try {
@@ -75,7 +147,7 @@ export function useBalatroInfernoController() {
   const [balance, setBalance] = useState(100)
   const [bet, setBet] = useState(DEFAULT_ANTE)
   const [streak, setStreak] = useState(0)
-  const [mode, setMode] = useState(() => readStoredGameMode())
+  const [mode, _setMode] = useState(() => readStoredGameMode())
   const [turboEnabled, setTurboEnabled] = useState(false)
   const [hand, setHand] = useState([])
   const [gameState, setGameState] = useState('idle')
@@ -100,6 +172,48 @@ export function useBalatroInfernoController() {
   const [debugEnabled, setDebugEnabled] = useState(false)
   const [debugSnapshot, setDebugSnapshot] = useState(null)
   const [debugLastWinSnapshot, setDebugLastWinSnapshot] = useState(null)
+
+  // Dev Tools
+  const devToolsAllowed = useMemo(() => isDevToolsAllowed(), [])
+  const devToolsExplicit = useMemo(() => isDevToolsExplicitlyEnabled(), [])
+  const [devToolsOpen, setDevToolsOpen] = useState(false)
+  const DEV_LOG_CAP = 400
+  const [devLogPaused, setDevLogPaused] = useState(false)
+  const [devLogEntries, setDevLogEntries] = useState([])
+  const devLogPausedRef = useRef(devLogPaused)
+  useEffect(() => {
+    devLogPausedRef.current = devLogPaused
+  }, [devLogPaused])
+
+  const pushDevLog = useCallback(
+    (type, payload = null) => {
+      if (!devToolsAllowed) return
+      if (devLogPausedRef.current) return
+      const entry = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        ts: Date.now(),
+        type,
+        payload,
+      }
+      setDevLogEntries((prev) => {
+        const next = [...prev, entry]
+        return next.length > DEV_LOG_CAP ? next.slice(next.length - DEV_LOG_CAP) : next
+      })
+    },
+    [devToolsAllowed],
+  )
+
+  const clearDevLog = useCallback(() => setDevLogEntries([]), [])
+  const toggleDevLogPaused = useCallback(() => setDevLogPaused((v) => !v), [])
+  const enableDevToolsExplicit = useCallback(() => {
+    try {
+      window.localStorage.setItem(DEVTOOLS_STORAGE_KEY, '1')
+    } catch {
+      // ignore
+    }
+    // Для простоты: после включения перезагружаем страницу, чтобы gating стал активен везде (включая hotkeys).
+    window.location.reload()
+  }, [])
 
   // Защита от “гонок” таймеров каскада: любой callback из старого шага игнорируется.
   const cascadeAnimTokenRef = useRef(0)
@@ -128,15 +242,42 @@ export function useBalatroInfernoController() {
     writeStoredGameMode(mode)
   }, [mode])
 
-  const toggleTurbo = useCallback(() => setTurboEnabled((v) => !v), [])
+  const toggleTurbo = useCallback(() => {
+    setTurboEnabled((v) => {
+      const next = !v
+      pushDevLog('TURBO_TOGGLE', { enabled: next })
+      return next
+    })
+  }, [pushDevLog])
+
+  const setMode = useCallback(
+    (nextMode) => {
+      _setMode((prev) => {
+        if (prev !== nextMode) pushDevLog('MODE_CHANGE', { from: prev, to: nextMode })
+        return nextMode
+      })
+    },
+    [pushDevLog],
+  )
+
+  const toggleDebugOverlay = useCallback((via = 'toggle') => {
+    setDebugEnabled((v) => {
+      const next = !v
+      pushDevLog('DEBUG_TOGGLE', { enabled: next, via })
+      return next
+    })
+  }, [pushDevLog])
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key?.toLowerCase?.() === 'd') setDebugEnabled((v) => !v)
+      if (!devToolsAllowed) return
+      if (e.key?.toLowerCase?.() === 'd') {
+        toggleDebugOverlay('hotkey(D)')
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [devToolsAllowed, toggleDebugOverlay])
 
   const clearCascadeActive = useCallback(() => {
     setCascadeStepIndex(0)
@@ -168,6 +309,8 @@ export function useBalatroInfernoController() {
     setDebugLastWinSnapshot(null)
   }, [clearCascadeActive])
 
+  const deckRemaining = useMemo(() => Math.max(0, (deck?.length ?? 0) - (dealIndex ?? 0)), [deck, dealIndex])
+
   useEffect(() => {
     if (gameState === 'dealing') {
       if (dealIndex < 5) {
@@ -185,15 +328,26 @@ export function useBalatroInfernoController() {
       const timer = browserClock.setTimeout(() => {
         if (mode === 'normal') {
           const evalResult = getBestHand(hand)
+          const combo = formatComboSignature(evalResult, hand)
           const resolved = resolveResultUseCase({ balance, bet, streak, evalResult })
           setResult(resolved.result)
           setBalance(resolved.balance)
           setStreak(resolved.streak)
           setGameState(resolved.gameState)
+          pushDevLog('RESULT_RESOLVED', {
+            mode: 'normal',
+            name: resolved.result?.name ?? null,
+            combo,
+            multiplier: resolved.result?.multiplier ?? null,
+            winAmount: (resolved.result?.multiplier ?? 0) * bet,
+            balanceAfter: resolved.balance,
+            streakAfter: resolved.streak,
+          })
           return
         }
 
         // CASCADE mode
+        pushDevLog('CASCADE_START', { bet, balanceBefore: balance })
         resetCascade()
         // на старте каскада убираем любые “хвосты” отображения результата
         setResult(null)
@@ -212,7 +366,7 @@ export function useBalatroInfernoController() {
       }, turboEnabled ? 150 : 300)
       return () => browserClock.clearTimeout(timer)
     }
-  }, [gameState, dealIndex, deck, hand, bet, balance, streak, mode, resetCascade, turboEnabled])
+  }, [gameState, dealIndex, deck, hand, bet, balance, streak, mode, resetCascade, turboEnabled, pushDevLog])
 
   useEffect(() => {
     if (gameState !== 'cascading') return
@@ -242,6 +396,21 @@ export function useBalatroInfernoController() {
       dealIndex: dealIndexRef.current,
       winStepNumber,
     })
+    const stepLogPayload = {
+      stepIndex: cascadeStepIndex,
+      winStepNumber,
+      name: step.evalResult?.name ?? null,
+      combo: formatComboSignature(step.evalResult, logicalHand),
+      didWin: step.didWin,
+      winAmount: step.winAmount,
+      baseWinAmount: step.baseWinAmount,
+      cascadeMultiplier: step.cascadeMultiplier,
+      didDeckShortage: step.didDeckShortage,
+      didJackpot: step.didJackpot,
+      jackpotAmount: step.jackpotAmount ?? 0,
+      deckLenBefore: deckRef.current.length,
+      dealIndexBefore: dealIndexRef.current,
+    }
     const computed = {
       token,
       stepIndex: cascadeStepIndex,
@@ -260,6 +429,7 @@ export function useBalatroInfernoController() {
       deckLenBefore: deckRef.current.length,
     }
     schedule(() => setDebugSnapshot(computed), 0)
+    schedule(() => pushDevLog('CASCADE_STEP', stepLogPayload), 0)
 
     // Каскад завершён (нет выигрыша) — начисляем totalWin одним платежом и показываем итог.
     if (!step.didWin) {
@@ -293,6 +463,13 @@ export function useBalatroInfernoController() {
         setResult(step.evalResult)
         setGameState('result')
         clearCascadeActive()
+        pushDevLog('CASCADE_FINISH', {
+          reason: 'no-win',
+          totalWin,
+          lastWinResultName: lastWinResult?.name ?? null,
+          wasJackpot,
+          jackpotAmount,
+        })
       }, 0)
 
       return () => {
@@ -417,6 +594,13 @@ export function useBalatroInfernoController() {
         setResult(step.evalResult)
         setGameState('result')
         clearCascadeActive()
+        pushDevLog('CASCADE_FINISH', {
+          reason: 'deck-shortage',
+          totalWin,
+          lastWinResultName: lastWinResult?.name ?? null,
+          wasJackpot,
+          jackpotAmount,
+        })
       }, appearStart + sortedIdx.length * appearDelay + 520)
     } else {
       schedule(() => setCascadeStepIndex((prev) => prev + 1), appearStart + sortedIdx.length * appearDelay + 520)
@@ -428,11 +612,13 @@ export function useBalatroInfernoController() {
     cascadeStepIndex,
     clearCascadeActive,
     turboEnabled,
+    pushDevLog,
   ])
 
   const handleDeal = () => {
     const next = startDealUseCase({ balance, bet }, { rng: nativeRng })
     if (!next) return
+    pushDevLog('DEAL_START', { mode, bet, balanceBefore: balance })
     resetCascade()
     setBalance(next.balance)
     setHand(next.hand)
@@ -440,6 +626,11 @@ export function useBalatroInfernoController() {
     setDealIndex(next.dealIndex)
     setDeck(next.deck)
     setGameState(next.gameState)
+    pushDevLog('DEAL_STARTED', {
+      gameState: next.gameState,
+      dealIndex: next.dealIndex,
+      deckLen: next.deck?.length ?? null,
+    })
   }
 
   const runJackpotSimulation = () => {
@@ -447,6 +638,7 @@ export function useBalatroInfernoController() {
     if (gameState !== 'idle' && gameState !== 'result') return
     if (balance < bet) return
 
+    pushDevLog('JACKPOT_SIM_START', { bet, balanceBefore: balance })
     resetCascade()
     setResult(null)
     setShowWinBanner(false)
@@ -457,6 +649,7 @@ export function useBalatroInfernoController() {
 
     const scenarioIdx = Math.floor(nativeRng.randomFloat() * 5)
     const scenario = buildJackpotSimulationScenario(scenarioIdx)
+    pushDevLog('JACKPOT_SIM_SCENARIO', { scenarioIdx })
 
     // Пропускаем стадию dealing (мгновенно “раздали” 5 карт) и идём в suspense → cascading.
     setDeck(scenario.deck)
@@ -484,20 +677,8 @@ export function useBalatroInfernoController() {
 
   const adjustBet = (amount) => {
     const newBet = adjustBetUseCase({ bet, balance, delta: amount, gameState })
+    if (newBet !== bet) pushDevLog('BET_CHANGE', { from: bet, to: newBet, delta: amount })
     setBet(newBet)
-  }
-
-  const forceHand = (jokerCount) => {
-    if (gameState !== 'idle' && gameState !== 'result') return
-    const next = forceHandUseCase({ balance, bet }, { rng: nativeRng }, jokerCount)
-    if (!next) return
-    resetCascade()
-    setBalance(next.balance)
-    setHand(next.hand)
-    setResult(next.result)
-    setDeck(next.deck)
-    setDealIndex(next.dealIndex)
-    setGameState(next.gameState)
   }
 
   const showResult = gameState === 'result' || gameState === 'cascading'
@@ -517,6 +698,7 @@ export function useBalatroInfernoController() {
     turboEnabled,
     hand,
     deck,
+    deckRemaining,
     dealIndex,
     gameState,
     result,
@@ -543,13 +725,22 @@ export function useBalatroInfernoController() {
     debugEnabled,
     debugSnapshot,
     debugLastWinSnapshot,
+    devLogEntries,
+    devLogPaused,
+    clearDevLog,
+    toggleDevLogPaused,
+    toggleDebugOverlay,
+    devToolsAllowed,
+    devToolsExplicit,
+    devToolsOpen,
     setMode,
     toggleTurbo,
     handleDeal,
     adjustBet,
-    forceHand,
     runJackpotSimulation,
     dismissJackpotCinematic,
+    setDevToolsOpen,
+    enableDevToolsExplicit,
   }
 }
 

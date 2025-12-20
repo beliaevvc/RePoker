@@ -1,6 +1,24 @@
 # Прогресс
 
 ## Статус
+- В работе: UI — на full desktop надпись “MAX WIN 150,000X” (`MaxWinPoster`) пересекалась с плашками CHIPS/ANTE.
+- Сделано: `MaxWinPoster` переведён на более безопасный layout внутри центральной колонки (`inset-x-0`, `text-center`, `px-1`, `leading-none`) и ограничен рост типографики на `2xl` (уменьшен max в `clamp()`), чтобы на 1920+ не “раздувалось” и не подрезалось соседними плашками.
+- Твик: “150,000X” заменено на “150.000x”, `x` сделан в 2 раза меньше (через `0.5em`), а вторая строка слегка опущена вниз (положительный `mt clamp`) для “воздуха”.
+- Гейты: `npm run test` — ✅ (24/24), `npm run lint` — ✅, `npm run build` — ✅ (прогон вне sandbox из-за `EPERM kill` в sandbox).
+- В работе: UI — увеличить высоту нижнего блока кнопок (TURBO/PLAY/AUTO/+/-), чтобы кнопки выглядели “толще” на ~50–60%.
+- Сделано: нижнему grid-контейнеру добавлен `min-height` (через `clamp`) + увеличена “толщина” press-эффекта (border-b/translate) для пропорционального ощущения.
+- Дальше: быстро проверить на mobile/desktop и прогнать гейты (lint/test/build).
+- Гейты (вне sandbox из-за EPERM в sandbox): `npm run lint` — ✅, `npm run test` — ✅ (24/24), `npm run build` — ✅.
+- Твик: высота блока нижних кнопок уменьшена ещё на ~10% (через `min-h clamp`), сохранив пропорции всех кнопок.
+- В работе: Dev Mode / Dev Tools drawer (кнопка DEV рядом с режимом, перенос JP, action log, deck watch).
+- Сделано (Dev Tools gating): добавлен gating Dev Tools — dev-сборка всегда разрешена, в проде включается только через `localStorage` (`repoker.devTools=1`) или query `?dev=1`/`?devtools=1`. Hotkey `D` теперь работает только при разрешённых Dev Tools.
+- Сделано (Dev Tools UI): добавлен компонент `DevToolsDrawer` (drawer слева на desktop / bottom-sheet на мобилке), который остаётся видимым во время каскада.
+- Сделано (перенос кнопок): убраны `JP`, `1J`, `2J` из основного UI рядом с PLAY; `JP SIM` доступен в Dev Tools.
+- Сделано (action log): добавлен in-memory лог событий (cap 400) + кнопки Pause/Clear/Copy.
+- Сделано (deck watch): в Dev Tools отображаются `deckRemaining`, `dealIndex`, `deckLen` и ключевые поля состояния (`mode`, `gameState`, `cascadeStepIndex`, jackpot flags).
+- Гейты (Dev Tools): `npm run lint` — ✅, `npm run test` — ✅ (24/24), `npm run build` — ✅.
+- Фикс: DEV-кнопка теперь показывается **в dev-сборке даже на узком (mobile) viewport**; в проде поведение без изменений (на мобилке скрыто без explicit enable).
+- Dev Tools UX: убран backdrop (нет затемнения и закрытия по клику вне панели), лог/стата переведены в человекочитаемый **русский** формат, кнопки лога теперь не “вылазят”.
 - В работе: Turbo-кнопка (ускорение темповых анимаций/таймингов без ускорения декоративных shake/ореолов).
 - Сделано (Turbo): добавлен `turboEnabled` в `useBalatroInfernoController`, ускорены JS-тайминги раздачи/suspense/каскада через масштабирование задержек.
 - Сделано (Turbo UI): добавлена кнопка `TURBO` в верхней панели `BalatroInferno`, toggle ON/OFF, disabled во время `isBusy`, без сохранения в `localStorage`.
@@ -53,6 +71,9 @@
 - `memory-bank/archive/archive-2025-12-21-cascade-multiplier.md`
 - `memory-bank/archive/archive-2025-12-21-jackpot-sim-button.md`
 - `memory-bank/archive/archive-2025-12-21-turbo-button.md`
+- `memory-bank/archive/archive-2025-12-21-devtools-devmode-v1.md`
+- `memory-bank/archive/archive-2025-12-21-controls-block-height.md`
+- `memory-bank/archive/archive-2025-12-21-maxwin-poster-desktop.md`
 
 ## Сделано
 - Добавлены Cursor-команды Memory Bank в `/.cursor/commands/`.
@@ -98,6 +119,13 @@
 
 ## Дальше
 - Дальше: `/van` для следующей задачи.
+
+## UI — кнопки (PLAY / TURBO / AUTO / +/-)
+- Сделано: убрана кнопка `TURBO` из верхней панели (рядом с MODE/DEV), чтобы все игровые кнопки были возле `PLAY`.
+- Сделано: нижний блок контролов перестроен в 3 колонки: **TURBO/AUTO слева от PLAY**, **+/- справа от PLAY** (вид +/- сохранён, только перемещены).
+- Сделано: `TURBO` и `AUTO` сделаны квадратными; `TURBO` — пиксельная молния (желтеет при включении), `AUTO` — пиксельная иконка-заготовка (пока disabled).
+- Гейты: `npm run lint` — ✅, `npm run test` — ✅ (24/24), `npm run build` — ✅.
+- Примечание: внутри sandbox `eslint` падал с `EPERM` при чтении `node_modules`, поэтому гейты прогнаны вне sandbox.
 
 ## Наблюдения
 - UI экран вынесен в `src/ui/screens/balatro-inferno/`, доменная логика и use‑cases отделены и покрыты unit‑тестами.

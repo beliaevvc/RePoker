@@ -9,22 +9,25 @@
 
 import { Play, RotateCcw } from 'lucide-react'
 import '../../../balatroInferno.css'
+import { useEffect, useMemo, useState } from 'react'
 
 import { TIER_COLORS } from './constants'
 import { useBalatroInfernoController } from './useBalatroInfernoController'
 import { Card } from './components/Card'
 import { ElectricPlasmaOrbs } from './components/ElectricPlasmaOrbs'
 import { CascadeMultiplierIndicator } from './components/CascadeMultiplierIndicator'
+import { DevToolsDrawer } from './components/DevToolsDrawer'
+import { PixelAutoIcon, PixelLightningIcon } from './components/PixelIcons'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 
 function MaxWinPoster() {
   return (
-    <div className="absolute top-0 md:top-1 left-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center select-none z-0">
-      <div className="text-[clamp(10px,1.4vw,14px)] font-black text-yellow-400 tracking-[clamp(0.16em,0.35vw,0.22em)] transform -skew-x-12 drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">
+    <div className="absolute inset-x-0 top-0 md:top-1 flex flex-col items-center justify-center select-none z-0 pointer-events-none px-1 text-center">
+      <div className="text-[clamp(10px,1.4vw,14px)] 2xl:text-[clamp(10px,1.0vw,13px)] font-black text-yellow-400 tracking-[clamp(0.16em,0.35vw,0.22em)] leading-none transform -skew-x-12 drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">
         MAX WIN
       </div>
-      <div className="text-[clamp(22px,3.6vw,48px)] font-black text-gold-shimmer tracking-tighter transform -skew-x-12 drop-shadow-[2px_2px_0_rgba(0,0,0,1)] mt-[clamp(-4px,-0.6vw,-2px)]">
-        150,000X
+      <div className="text-[clamp(22px,3.6vw,48px)] 2xl:text-[clamp(20px,2.6vw,40px)] font-black text-gold-shimmer tracking-tighter leading-none transform -skew-x-12 drop-shadow-[2px_2px_0_rgba(0,0,0,1)] mt-[clamp(2px,0.4vw,6px)]">
+        150.000<span className="text-[0.5em] leading-none">x</span>
       </div>
     </div>
   )
@@ -73,6 +76,7 @@ export default function BalatroInferno() {
     lastCascadeStepsCount,
     lastWasJackpot,
     dismissJackpotCinematic,
+    lastJackpotAmount,
     cascadeVanishingIndices,
     cascadeAppearingIndices,
     cascadeHighlightIndices,
@@ -84,16 +88,29 @@ export default function BalatroInferno() {
     debugEnabled,
     debugSnapshot,
     debugLastWinSnapshot,
+    devLogEntries,
+    devLogPaused,
+    clearDevLog,
+    toggleDevLogPaused,
+    toggleDebugOverlay,
+    devToolsAllowed,
+    devToolsExplicit,
+    devToolsOpen,
+    setDevToolsOpen,
+    enableDevToolsExplicit,
     hand,
+    deck,
+    deckRemaining,
+    dealIndex,
     gameState,
     result,
     tier,
     isWin,
     isLose,
     shakeClass,
+    cascadeStepIndex,
     handleDeal,
     adjustBet,
-    forceHand,
     runJackpotSimulation,
   } = useBalatroInfernoController()
 
@@ -120,6 +137,27 @@ export default function BalatroInferno() {
     debugSnapshot.evalResult &&
     displayEval.name !== debugSnapshot.evalResult.name
 
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const apply = () => setIsMobileViewport(Boolean(mq.matches))
+    apply()
+    mq.addEventListener?.('change', apply)
+    return () => mq.removeEventListener?.('change', apply)
+  }, [])
+
+  // DEV-кнопка:
+  // - на desktop показываем всегда (чтобы не было “куда пропало?”)
+  // - на mobile показываем только в dev-сборке или при explicit enable
+  const showDevButton = !isMobileViewport || devToolsExplicit || Boolean(import.meta?.env?.DEV)
+  const devToolsVariant = isMobileViewport ? 'sheet' : 'drawer'
+  const canRunJackpotSim = useMemo(() => {
+    if (mode !== 'cascade') return false
+    if (isBusy) return false
+    if (balance < bet) return false
+    return gameState === 'idle' || gameState === 'result'
+  }, [mode, isBusy, balance, bet, gameState])
+
   return (
     <div
       className={[
@@ -133,6 +171,38 @@ export default function BalatroInferno() {
       </div>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 z-0" />
       <div className="fixed inset-0 z-[100] pointer-events-none crt-overlay" />
+
+      {showDevButton && (
+        <DevToolsDrawer
+          open={devToolsOpen}
+          variant={devToolsVariant}
+          allowed={devToolsAllowed}
+          onEnable={enableDevToolsExplicit}
+          onClose={() => setDevToolsOpen(false)}
+          devLogEntries={devLogEntries}
+          devLogPaused={devLogPaused}
+          onToggleDevLogPaused={toggleDevLogPaused}
+          onClearDevLog={clearDevLog}
+          onToggleDebugOverlay={() => toggleDebugOverlay('button')}
+          onRunJackpotSimulation={runJackpotSimulation}
+          canRunJackpotSimulation={canRunJackpotSim}
+          stateSnapshot={{
+            mode,
+            gameState,
+            turbo: turboEnabled,
+            debug: debugEnabled,
+            balance: Number(balance || 0).toFixed(2),
+            bet: Number(bet || 0).toFixed(2),
+            deckRemaining,
+            dealIndex,
+            deckLen: deck?.length ?? 0,
+            cascadeStepIndex,
+            lastCascadeStepsCount,
+            lastWasJackpot,
+            lastJackpotAmount,
+          }}
+        />
+      )}
 
       {/* JACKPOT cinematic overlays: вынесены на самый верх (вне shake-контейнера), чтобы MAX WIN был поверх затемнения */}
       {runMaxWinCinematic && (
@@ -224,23 +294,6 @@ export default function BalatroInferno() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              disabled={isBusy}
-              onClick={toggleTurbo}
-              className={[
-                'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors rounded-lg border',
-                turboEnabled
-                  ? 'bg-emerald-200 text-slate-900 border-emerald-300'
-                  : 'text-slate-200 border-slate-700 bg-slate-900/50 hover:bg-slate-800/60',
-                isBusy ? 'opacity-50 cursor-not-allowed' : '',
-              ].join(' ')}
-              aria-pressed={turboEnabled}
-              title={isBusy ? 'Turbo нельзя переключать во время анимаций' : 'Turbo: ускорить каскад/раздачу/анимации выигрыша'}
-            >
-              TURBO
-            </button>
-
             <div className="inline-flex rounded-lg overflow-hidden border border-slate-700 bg-slate-900/50">
             <button
               type="button"
@@ -267,6 +320,23 @@ export default function BalatroInferno() {
               CASCADE
             </button>
             </div>
+
+            {showDevButton && (
+              <button
+                type="button"
+                onClick={() => setDevToolsOpen((v) => !v)}
+                className={[
+                  'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors rounded-lg border',
+                  devToolsOpen
+                    ? 'bg-violet-200 text-slate-900 border-violet-300'
+                    : 'text-slate-200 border-slate-700 bg-slate-900/50 hover:bg-slate-800/60',
+                ].join(' ')}
+                aria-pressed={devToolsOpen}
+                title={devToolsExplicit ? 'Dev Tools (explicitly enabled)' : 'Dev Tools'}
+              >
+                DEV
+              </button>
+            )}
           </div>
         </div>
 
@@ -426,24 +496,34 @@ export default function BalatroInferno() {
         <div className="w-full max-w-2xl px-4 flex flex-col gap-2 shrink-0">
           <ResimpleLogo />
 
-          {/* Контролы: узкая колонка +/- слева, широкий PLAY по центру, debug справа (не раздувает PLAY) */}
-          <div className="grid grid-cols-[clamp(90px,14vw,140px)_minmax(0,1fr)_auto] grid-rows-2 gap-2 sm:gap-3 w-full items-stretch">
+          {/* Контролы: слева TURBO/AUTO, по центру PLAY, справа +/- (симметрия, плотная компоновка) */}
+          <div className="grid grid-cols-[clamp(64px,12vw,90px)_minmax(0,1fr)_clamp(64px,12vw,90px)] grid-rows-2 gap-1 sm:gap-2 w-full items-stretch min-h-[clamp(97px,12.6vh,126px)]">
             <button
-              onClick={() => adjustBet(1)}
-              disabled={gameState !== 'idle' && gameState !== 'result'}
-              className="w-full h-[clamp(44px,6vh,56px)] bg-slate-700 hover:bg-slate-600 border-b-4 border-slate-900 rounded text-white active:border-b-0 active:translate-y-1 text-[clamp(18px,5vw,28px)]"
+              type="button"
+              onClick={toggleTurbo}
+              disabled={isBusy}
+              className={[
+                'w-full h-full bg-slate-700 hover:bg-slate-600 border-b-[6px] border-slate-900 rounded-lg',
+                'active:border-b-0 active:translate-y-[6px] transition-all',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'flex items-center justify-center',
+              ].join(' ')}
+              aria-pressed={turboEnabled}
+              title={isBusy ? 'Turbo нельзя переключать во время анимаций' : 'Turbo: ускорить каскад/раздачу/анимации выигрыша'}
             >
-              +
+              <span className={`text-[10px] sm:text-xs font-bold tracking-wider ${turboEnabled ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]' : 'text-slate-400'}`}>
+                TURBO
+              </span>
             </button>
             <button
               onClick={handleDeal}
               disabled={isBusy}
               className={[
-                'w-full row-span-2 relative group overflow-hidden',
+                'w-full row-span-2 relative group overflow-hidden col-start-2',
                 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500',
-                'border-b-[8px] border-[#7f1d1d] rounded-xl',
+                'border-b-[12px] border-[#7f1d1d] rounded-lg',
                 'shadow-[0_10px_20px_rgba(220,38,38,0.3)]',
-                'active:border-b-0 active:translate-y-2 active:shadow-none',
+                'active:border-b-0 active:translate-y-[12px] active:shadow-none',
                 'disabled:filter disabled:grayscale disabled:cursor-not-allowed',
                 'transition-all flex items-center justify-center gap-2 sm:gap-4',
               ].join(' ')}
@@ -459,45 +539,31 @@ export default function BalatroInferno() {
                 {gameState === 'suspense' ? '...' : 'PLAY'}
               </span>
             </button>
-            <div className="row-span-2 flex flex-col gap-1 justify-between opacity-[0.14] hover:opacity-100 transition-opacity">
-              {mode === 'cascade' && (
-                <button
-                  type="button"
-                  onClick={runJackpotSimulation}
-                  disabled={isBusy}
-                  className={[
-                    'h-8 w-10 rounded',
-                    'bg-slate-900/40 border border-slate-700/80',
-                    'text-[9px] font-mono uppercase tracking-[0.2em] text-slate-200/80',
-                    'hover:bg-slate-800/60 hover:text-slate-100',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/60',
-                    'disabled:opacity-40 disabled:cursor-not-allowed',
-                  ].join(' ')}
-                  title="QA: запускает каскадный сценарий, который гарантированно приводит к джекпоту"
-                  aria-label="JACKPOT SIM (QA)"
-                >
-                  JP
-                </button>
-              )}
-              <button
-                onClick={() => forceHand(1)}
-                className="h-8 w-10 bg-purple-900 border border-purple-500 text-[10px] text-white font-mono flex items-center justify-center hover:bg-purple-700"
-                title="Force: 1 Joker"
-              >
-                1J
-              </button>
-              <button
-                onClick={() => forceHand(2)}
-                className="h-8 w-10 bg-yellow-900 border border-yellow-500 text-[10px] text-white font-mono flex items-center justify-center hover:bg-yellow-700"
-                title="Force: 2 Jokers"
-              >
-                2J
-              </button>
-            </div>
+            <button
+              onClick={() => adjustBet(1)}
+              disabled={gameState !== 'idle' && gameState !== 'result'}
+              className="w-full h-full bg-slate-700 hover:bg-slate-600 border-b-[6px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[6px] text-lg sm:text-xl col-start-3"
+              title="Увеличить ANTE"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              disabled={true}
+              className={[
+                'w-full h-full bg-slate-700 border-b-[6px] border-slate-900 rounded-lg col-start-1 row-start-2',
+                'opacity-50 cursor-not-allowed',
+                'flex items-center justify-center',
+              ].join(' ')}
+              title="AUTO (скоро): автоигра"
+            >
+              <span className="text-[10px] sm:text-xs text-slate-400 tracking-wider">AUTO</span>
+            </button>
             <button
               onClick={() => adjustBet(-1)}
               disabled={gameState !== 'idle' && gameState !== 'result'}
-              className="w-full h-[clamp(44px,6vh,56px)] bg-slate-700 hover:bg-slate-600 border-b-4 border-slate-900 rounded text-white active:border-b-0 active:translate-y-1 text-[clamp(18px,5vw,28px)]"
+              className="w-full h-full bg-slate-700 hover:bg-slate-600 border-b-[6px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[6px] text-lg sm:text-xl col-start-3 row-start-2"
+              title="Уменьшить ANTE"
             >
               -
             </button>
