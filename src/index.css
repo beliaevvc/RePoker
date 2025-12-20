@@ -5,10 +5,17 @@ body,
 #root {
   height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
+}
+
+/* На мобильных убираем “резиновый” overscroll, чтобы не появлялся паразитный скролл. */
+html,
+body {
+  overscroll-behavior: none;
 }
 
 * {

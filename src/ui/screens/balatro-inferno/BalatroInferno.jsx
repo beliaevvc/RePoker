@@ -30,7 +30,7 @@ function MaxWinPoster() {
 
 function ResimpleLogo() {
   return (
-    <div className="relative group cursor-pointer w-full flex justify-center mt-2 mb-2">
+    <div className="relative group cursor-pointer w-full flex justify-center mt-[clamp(4px,1vh,8px)] mb-[clamp(4px,1vh,8px)]">
       <div className="relative animate-logo-glitch max-w-full text-center">
         <span className="text-[clamp(18px,6vw,36px)] font-black tracking-[0.08em] sm:tracking-[0.1em] text-white/90 drop-shadow-[2px_2px_0_#000] select-none uppercase font-mono break-words">
           RESIMPLE <span className="font-bold tracking-[0.3em] opacity-80">GAMES</span>
@@ -63,14 +63,16 @@ export default function BalatroInferno() {
     useBalatroInfernoController()
 
   return (
-    <div className="h-[100svh] min-h-screen bg-[#020617] font-press-start overflow-x-hidden select-none relative flex flex-col pb-safe">
+    <div className="h-[100svh] bg-[#020617] font-press-start overflow-hidden select-none relative flex flex-col pb-safe">
       <div className="absolute inset-[-50%] animate-spin-slow origin-center z-0 pointer-events-none opacity-60">
         <div className="w-full h-full bg-[conic-gradient(from_0deg,#0f172a,#1e1b4b,#312e81,#0f172a)] blur-3xl" />
       </div>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 z-0" />
       <div className="fixed inset-0 z-[100] pointer-events-none crt-overlay" />
 
-      <div className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-4 sm:py-6 md:py-8 ${shakeClass}`}>
+      <div
+        className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-[clamp(8px,2vh,24px)] ${shakeClass}`}
+      >
         <div
           className={`absolute top-0 inset-x-0 z-[70] pointer-events-none flex flex-col items-center justify-center pt-8 md:pt-12 transition-all duration-300 ${
             tier === 7 ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
@@ -114,9 +116,8 @@ export default function BalatroInferno() {
           </div>
         </div>
 
-        {/* Центр (карты/эффекты): при нехватке высоты прокручиваем, чтобы контролы всегда оставались видимыми */}
-        <div className="relative w-full flex flex-col items-center justify-center flex-1 min-h-0 overflow-y-auto overscroll-contain gap-4 md:gap-8">
-          <div className="h-[clamp(8px,6vh,48px)]" />
+        {/* Центр (карты/эффекты): без скролла. Всё должно умещаться в один экран. */}
+        <div className="relative w-full flex flex-col items-center justify-center flex-1 min-h-0 gap-[clamp(10px,2.5vh,28px)]">
 
           <div
             className={`fixed left-1/2 -translate-x-1/2 top-[clamp(168px,24vh,300px)] sm:top-28 z-[220] transition-all duration-150 ${
@@ -156,7 +157,7 @@ export default function BalatroInferno() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-8 w-full mt-[clamp(24px,8vh,120px)]">
+          <div className="flex flex-col items-center gap-[clamp(10px,2vh,24px)] w-full mt-auto mb-[clamp(52px,7.5vh,130px)]">
             <div className="w-full max-w-5xl px-2 sm:px-4">
               <div className="grid grid-cols-5 justify-items-center gap-[clamp(4px,1.5vw,24px)] perspective-1000">
               {[0, 1, 2, 3, 4].map((i) => (
