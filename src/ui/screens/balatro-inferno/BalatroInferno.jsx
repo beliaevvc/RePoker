@@ -63,14 +63,14 @@ export default function BalatroInferno() {
     useBalatroInfernoController()
 
   return (
-    <div className="min-h-[100svh] min-h-screen bg-[#020617] font-press-start overflow-hidden select-none relative flex flex-col pb-safe">
+    <div className="h-[100svh] min-h-screen bg-[#020617] font-press-start overflow-x-hidden select-none relative flex flex-col pb-safe">
       <div className="absolute inset-[-50%] animate-spin-slow origin-center z-0 pointer-events-none opacity-60">
         <div className="w-full h-full bg-[conic-gradient(from_0deg,#0f172a,#1e1b4b,#312e81,#0f172a)] blur-3xl" />
       </div>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 z-0" />
       <div className="fixed inset-0 z-[100] pointer-events-none crt-overlay" />
 
-      <div className={`relative z-10 w-full flex-1 flex flex-col items-center justify-between py-4 sm:py-6 md:py-8 ${shakeClass}`}>
+      <div className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-4 sm:py-6 md:py-8 ${shakeClass}`}>
         <div
           className={`absolute top-0 inset-x-0 z-[70] pointer-events-none flex flex-col items-center justify-center pt-8 md:pt-12 transition-all duration-300 ${
             tier === 7 ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
@@ -114,34 +114,37 @@ export default function BalatroInferno() {
           </div>
         </div>
 
-        <div className="relative w-full flex flex-col items-center justify-center flex-1 gap-4 md:gap-8">
-          <div className="h-28 md:h-32" />
+        {/* Центр (карты/эффекты): при нехватке высоты прокручиваем, чтобы контролы всегда оставались видимыми */}
+        <div className="relative w-full flex flex-col items-center justify-center flex-1 min-h-0 overflow-y-auto overscroll-contain gap-4 md:gap-8">
+          <div className="h-[clamp(8px,6vh,48px)]" />
 
           <div
-            className={`absolute top-16 sm:top-0 z-50 transition-all duration-150 ${
+            className={`fixed left-1/2 -translate-x-1/2 top-[clamp(168px,24vh,300px)] sm:top-28 z-[220] transition-all duration-150 ${
               isWin && tier !== 7 ? 'scale-100 opacity-100 translate-y-0' : 'scale-0 opacity-0 translate-y-10'
             }`}
           >
-            <div
-              className={[
-                'bg-[#0f0f15] border-[4px] border-white px-4 sm:px-8 py-3 sm:py-4 shadow-[10px_10px_0_rgba(0,0,0,0.8)] transform rotate-[-3deg] max-w-[92vw]',
-                tier >= 3 ? 'animate-glitch' : 'animate-bounce-subtle',
-              ].join(' ')}
-            >
+            <div className="relative isolate">
               <div
-                className={`text-xl sm:text-2xl md:text-5xl uppercase text-white text-center leading-tight break-words ${TIER_COLORS[tier]?.text}`}
+                className={[
+                  'relative z-10 bg-[#0f0f15] border-[4px] border-white px-4 sm:px-8 py-3 sm:py-4 shadow-[10px_10px_0_rgba(0,0,0,0.8)] transform rotate-[-3deg] max-w-[92vw]',
+                  tier >= 3 ? 'animate-glitch' : 'animate-bounce-subtle',
+                ].join(' ')}
               >
-                {result?.name}
+                <div
+                  className={`text-xl sm:text-2xl md:text-5xl uppercase text-white text-center leading-tight break-words ${TIER_COLORS[tier]?.text}`}
+                >
+                  {result?.name}
+                </div>
+                <div className="text-base sm:text-lg md:text-2xl text-center mt-2 text-white break-words">
+                  +${result ? bet * result.multiplier : 0}
+                </div>
               </div>
-              <div className="text-base sm:text-lg md:text-2xl text-center mt-2 text-white break-words">
-                +${result ? bet * result.multiplier : 0}
-              </div>
+              <div className="absolute inset-0 z-0 animate-ping opacity-50 bg-white rounded-xl" />
             </div>
-            <div className="absolute inset-0 -z-10 animate-ping opacity-50 bg-white rounded-xl" />
           </div>
 
           <div
-            className={`absolute top-20 sm:top-4 z-50 transition-all duration-150 ${
+            className={`fixed left-1/2 -translate-x-1/2 top-[clamp(188px,26vh,320px)] sm:top-32 z-[220] transition-all duration-150 ${
               isLose ? 'scale-100 opacity-100 translate-y-0' : 'scale-0 opacity-0 translate-y-10'
             }`}
           >
@@ -153,7 +156,7 @@ export default function BalatroInferno() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-8 w-full">
+          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-8 w-full mt-[clamp(24px,8vh,120px)]">
             <div className="w-full max-w-5xl px-2 sm:px-4">
               <div className="grid grid-cols-5 justify-items-center gap-[clamp(4px,1.5vw,24px)] perspective-1000">
               {[0, 1, 2, 3, 4].map((i) => (
@@ -174,7 +177,8 @@ export default function BalatroInferno() {
           </div>
         </div>
 
-        <div className="w-full max-w-2xl px-4 flex flex-col gap-2">
+        {/* Низ (логотип + контролы): всегда видим, не сжимается */}
+        <div className="w-full max-w-2xl px-4 flex flex-col gap-2 shrink-0">
           <ResimpleLogo />
 
           {/* Контролы: узкая колонка +/- слева, широкий PLAY по центру, debug справа (не раздувает PLAY) */}
