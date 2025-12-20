@@ -159,17 +159,18 @@ export default function BalatroInferno() {
 
           <div className="flex flex-col items-center gap-[clamp(10px,2vh,24px)] w-full mt-auto mb-[clamp(52px,7.5vh,130px)]">
             <div className="w-full max-w-5xl px-2 sm:px-4">
-              <div className="grid grid-cols-5 justify-items-center gap-[clamp(4px,1.5vw,24px)] perspective-1000">
+              <div className="flex justify-center items-center perspective-1000 sm:grid sm:grid-cols-5 sm:justify-items-center sm:gap-[clamp(4px,1.5vw,24px)]">
               {[0, 1, 2, 3, 4].map((i) => (
-                <Card
-                  key={i}
-                  index={i}
-                  card={hand[i]}
-                  isVisible={i < hand.length}
-                  isWinning={gameState === 'result' && result?.winningIndices?.includes(i)}
-                  isGrayedOut={gameState === 'result' && result?.name !== 'High Card' && !result?.winningIndices?.includes(i)}
-                  handTier={tier}
-                />
+                <div key={i} className={i === 0 ? '' : '-ml-[clamp(14px,4vw,26px)] sm:ml-0'}>
+                  <Card
+                    index={i}
+                    card={hand[i]}
+                    isVisible={i < hand.length}
+                    isWinning={gameState === 'result' && result?.winningIndices?.includes(i)}
+                    isGrayedOut={gameState === 'result' && result?.name !== 'High Card' && !result?.winningIndices?.includes(i)}
+                    handTier={tier}
+                  />
+                </div>
               ))}
               </div>
             </div>

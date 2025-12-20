@@ -195,7 +195,9 @@ function PixelFire({ tier }) {
 export function Card({ card, index, isVisible, isWinning, isGrayedOut, handTier }) {
   // Важно: размер карты должен хорошо адаптироваться при любом ресайзе окна.
   // Здесь задаём ширину через clamp и фиксируем пропорции через aspect-ratio.
-  const cardClass = 'w-full max-w-[clamp(56px,16vw,200px)] aspect-[100/140]'
+  // На мобилках делаем карту крупнее (в ряд она “влезает” за счёт перекрытия в контейнере),
+  // на sm+ возвращаем обычное поведение через grid.
+  const cardClass = 'aspect-[100/140] w-[clamp(78px,24vw,124px)] sm:w-[clamp(56px,16vw,200px)]'
   const isJoker = card?.suit === 'joker'
   const rot = stableRotationDeg(card, index)
 
