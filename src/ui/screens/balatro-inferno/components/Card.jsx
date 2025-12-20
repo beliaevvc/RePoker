@@ -192,7 +192,7 @@ function PixelFire({ tier }) {
  * }} props
  * @returns {JSX.Element}
  */
-export function Card({ card, index, isVisible, isWinning, isGrayedOut, handTier }) {
+export function Card({ card, index, isVisible, isWinning, isGrayedOut, isVanishing = false, isAppearing = false, handTier }) {
   // Важно: размер карты должен хорошо адаптироваться при любом ресайзе окна.
   // Здесь задаём ширину через clamp и фиксируем пропорции через aspect-ratio.
   // На мобилках делаем карту крупнее (в ряд она “влезает” за счёт перекрытия в контейнере),
@@ -215,6 +215,8 @@ export function Card({ card, index, isVisible, isWinning, isGrayedOut, handTier 
   const winningAnim = isWinning ? 'animate-card-float z-20' : ''
   const idleAnim = !isWinning && !isGrayedOut ? 'animate-card-idle' : ''
   const grayStyle = isGrayedOut ? 'opacity-40 grayscale brightness-50 scale-95 blur-[0.5px]' : ''
+  const vanishAnim = isVanishing ? 'animate-cascade-vanish' : ''
+  const appearAnim = isAppearing ? 'animate-cascade-appear' : ''
 
   const bgStyle = isJoker
     ? 'bg-gradient-to-br from-yellow-600 via-amber-500 to-yellow-700 shadow-[0_0_20px_#f59e0b]'
@@ -222,11 +224,16 @@ export function Card({ card, index, isVisible, isWinning, isGrayedOut, handTier 
 
   return (
     <div
-      className={`relative ${cardClass} transition-all duration-200 ease-out ${grayStyle} ${winningAnim} ${idleAnim}`}
+      className={`relative ${cardClass} transition-all duration-200 ease-out ${grayStyle} ${winningAnim} ${idleAnim} ${vanishAnim} ${appearAnim}`}
       style={{
         '--rot': `${rot}deg`,
         transitionDelay: isWinning ? '0ms' : `${index * 40}ms`,
-        transform: isWinning ? 'translateY(-25px) scale(1.15) rotate(0deg)' : `rotate(${rot}deg)`,
+        transform:
+          isVanishing || isAppearing
+            ? undefined
+            : isWinning
+              ? 'translateY(-25px) scale(1.15) rotate(0deg)'
+              : `rotate(${rot}deg)`,
       }}
     >
       {isWinning && <PixelFire tier={handTier} />}

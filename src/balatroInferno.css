@@ -93,6 +93,66 @@
   animation: card-float 2s ease-in-out infinite;
 }
 
+/* CASCADE: исчезновение выигрышных карт */
+@keyframes cascade-vanish {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(var(--rot));
+    filter: blur(0px);
+  }
+  60% {
+    opacity: 0.35;
+    transform: translateY(10px) scale(0.92) rotate(calc(var(--rot) * 0.5));
+    filter: blur(0.6px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.75) rotate(0deg);
+    filter: blur(1.2px);
+  }
+}
+.animate-cascade-vanish {
+  animation: cascade-vanish 0.26s ease-in forwards;
+}
+
+/* CASCADE: появление новых карт (заметный “drop-in”) */
+@keyframes cascade-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.86) rotate(var(--rot));
+    filter: blur(1.2px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.06) rotate(var(--rot));
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px) scale(1) rotate(var(--rot));
+    filter: blur(0px);
+  }
+}
+.animate-cascade-appear {
+  animation: cascade-appear 0.28s cubic-bezier(0.2, 1.1, 0.2, 1) both;
+}
+
+/* CASCADE: короткий “флэш” на весь ряд карт после refill (делает появление заметным) */
+@keyframes cascade-refill-flash {
+  0% {
+    filter: brightness(1) saturate(1);
+  }
+  30% {
+    filter: brightness(1.45) saturate(1.25) drop-shadow(0 0 22px rgba(147, 197, 253, 0.55));
+  }
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+}
+.animate-cascade-refill-flash {
+  animation: cascade-refill-flash 0.22s ease-out both;
+}
+
 @keyframes shake-mid {
   0%,
   100% {

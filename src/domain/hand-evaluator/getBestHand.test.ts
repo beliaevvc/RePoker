@@ -66,6 +66,15 @@ describe('getBestHand', () => {
     expect(res.multiplier).toBe(150)
     expect(res.winningIndices).toEqual([0, 1, 2, 3, 4])
   })
+
+  it('с 1 джокером при "одной паре" выбирает пару со старшей картой (а не с младшей)', () => {
+    // Здесь джокер может образовать пару с любой из карт руки.
+    // Ожидаем, что будет выбрана пара с самой старшей доступной картой: J (11).
+    const hand = [c('spades', 2), c('hearts', 5), c('clubs', 9), c('diamonds', 11), c('joker', 15, 'j1')]
+    const res = getBestHand(hand)
+    expect(res.name).toBe('Pair')
+    expect(res.winningIndices).toEqual([3, 4])
+  })
 })
 
 

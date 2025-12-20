@@ -11,7 +11,9 @@
 import type { Card } from '../../domain/cards/types'
 import type { HandResult } from '../../domain/hand-evaluator/getBestHand'
 
-export type GameState = 'idle' | 'dealing' | 'suspense' | 'result'
+export type GameState = 'idle' | 'dealing' | 'suspense' | 'cascading' | 'result'
+
+export type GameMode = 'normal' | 'cascade'
 
 export type GameModel = {
   balance: number

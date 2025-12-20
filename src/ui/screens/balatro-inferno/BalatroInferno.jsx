@@ -14,6 +14,7 @@ import { TIER_COLORS } from './constants'
 import { useBalatroInfernoController } from './useBalatroInfernoController'
 import { Card } from './components/Card'
 import { ElectricPlasmaOrbs } from './components/ElectricPlasmaOrbs'
+import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 
 function MaxWinPoster() {
   return (
@@ -59,8 +60,52 @@ function ResimpleLogo() {
  * @returns {JSX.Element}
  */
 export default function BalatroInferno() {
-  const { balance, bet, streak, hand, gameState, result, tier, isWin, isLose, shakeClass, handleDeal, adjustBet, forceHand } =
-    useBalatroInfernoController()
+  const {
+    balance,
+    bet,
+    streak,
+    mode,
+    setMode,
+    lastCascadeTotalWin,
+    lastCascadeStepsCount,
+    cascadeVanishingIndices,
+    cascadeAppearingIndices,
+    cascadeHighlightIndices,
+    cascadeRefillFlash,
+    showWinBanner,
+    winBannerAmount,
+    debugEnabled,
+    debugSnapshot,
+    debugLastWinSnapshot,
+    hand,
+    gameState,
+    result,
+    tier,
+    isWin,
+    isLose,
+    shakeClass,
+    handleDeal,
+    adjustBet,
+    forceHand,
+  } = useBalatroInfernoController()
+
+  const canChangeMode = gameState === 'idle' || gameState === 'result'
+  const isBusy = gameState === 'dealing' || gameState === 'suspense' || gameState === 'cascading'
+  const showCascadeTotalBanner = mode === 'cascade' && gameState === 'result' && lastCascadeTotalWin > 0
+  const showStepWinBanner =
+    (gameState === 'result' && mode !== 'cascade' && isWin) ||
+    (gameState === 'cascading' && showWinBanner && (result?.multiplier ?? 0) > 0)
+  const stepWinAmount = gameState === 'cascading' ? winBannerAmount : result ? bet * result.multiplier : 0
+  const cascadeShowDimming = gameState === 'cascading' && showWinBanner && (result?.name ?? '') !== 'High Card'
+
+  const displayHandIsComplete = Array.isArray(hand) && hand.length === 5 && hand.every(Boolean)
+  const displayEval = displayHandIsComplete ? getBestHand(hand) : null
+  const mismatch =
+    debugEnabled &&
+    debugSnapshot &&
+    displayEval &&
+    debugSnapshot.evalResult &&
+    displayEval.name !== debugSnapshot.evalResult.name
 
   return (
     <div className="h-[100svh] bg-[#020617] font-press-start overflow-hidden select-none relative flex flex-col pb-safe">
@@ -73,6 +118,89 @@ export default function BalatroInferno() {
       <div
         className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-[clamp(8px,2vh,24px)] ${shakeClass}`}
       >
+        {debugEnabled && (
+          <div className="fixed right-3 top-3 z-[500] max-w-[min(520px,92vw)] bg-black/70 border border-slate-600 rounded p-3 text-[10px] text-slate-100 font-mono">
+            <div className="flex items-center justify-between gap-3">
+              <div className="uppercase tracking-widest text-slate-200">DEBUG (toggle: D)</div>
+              {mismatch && <div className="text-red-300 font-bold">MISMATCH</div>}
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="border border-slate-700 rounded p-2">
+                <div className="text-slate-300 uppercase">computed</div>
+                <div className="mt-1">token: {debugSnapshot?.token ?? '-'}</div>
+                <div>stepIndex: {debugSnapshot?.stepIndex ?? '-'}</div>
+                <div>phase: {debugSnapshot?.phase ?? '-'}</div>
+                <div>eval: {debugSnapshot?.evalResult?.name ?? '-'}</div>
+                <div>winIdx: {(debugSnapshot?.winningIndices ?? []).join(',') || '-'}</div>
+                <div>totalWin: {debugSnapshot?.totalWin ?? '-'}</div>
+                <div>lastWin: {debugSnapshot?.lastWinResultName ?? '-'}</div>
+                <div className="mt-1 text-slate-300">hand:</div>
+                <div className="break-words">
+                  {(debugSnapshot?.logicalHand ?? [])
+                    .map((c) => `${c?.rank ?? '?'}:${c?.suit ?? '?'}`)
+                    .join(' | ') || '-'}
+                </div>
+              </div>
+              <div className="border border-slate-700 rounded p-2">
+                <div className="text-slate-300 uppercase">display</div>
+                <div className="mt-1">state: {gameState}</div>
+                <div>eval: {displayEval?.name ?? '(incomplete)'}</div>
+                <div>winIdx: {(displayEval?.winningIndices ?? []).join(',') || '-'}</div>
+                <div className="mt-1 text-slate-300">hand:</div>
+                <div className="break-words">
+                  {(hand ?? []).map((c) => (c ? `${c.rank}:${c.suit}` : '∅')).join(' | ') || '-'}
+                </div>
+              </div>
+            </div>
+            <div className="mt-2 border border-slate-700 rounded p-2">
+              <div className="text-slate-300 uppercase">last win (commit)</div>
+              <div className="mt-1">stepIndex: {debugLastWinSnapshot?.stepIndex ?? '-'}</div>
+              <div>eval: {debugLastWinSnapshot?.eval ?? '-'}</div>
+              <div>winIdx: {(debugLastWinSnapshot?.winIdx ?? []).join(',') || '-'}</div>
+              <div>winAmount: {debugLastWinSnapshot?.winAmount ?? '-'}</div>
+              <div>totalAfter: {debugLastWinSnapshot?.totalWinAfter ?? '-'}</div>
+              <div className="mt-1 break-words">{(debugLastWinSnapshot?.handAfter ?? []).join(' | ') || '-'}</div>
+            </div>
+            <div className="mt-2 text-slate-400">
+              Если есть mismatch — скинь скрин этого оверлея, и я точечно починю рассинхрон.
+            </div>
+          </div>
+        )}
+
+        {/* Переключатель режима (минимальный UI, без изменения механики normal) */}
+        <div className="w-full max-w-5xl px-3 sm:px-4 flex items-center justify-between gap-2 mb-2 sm:mb-3">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-300/90">
+            MODE: <span className="text-white">{mode === 'cascade' ? 'CASCADE' : 'NORMAL'}</span>
+          </div>
+
+          <div className="inline-flex rounded-lg overflow-hidden border border-slate-700 bg-slate-900/50 shrink-0">
+            <button
+              type="button"
+              disabled={!canChangeMode}
+              onClick={() => setMode('normal')}
+              className={[
+                'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors',
+                mode === 'normal' ? 'bg-slate-200 text-slate-900' : 'text-slate-200 hover:bg-slate-800/60',
+                !canChangeMode ? 'opacity-50 cursor-not-allowed' : '',
+              ].join(' ')}
+            >
+              NORMAL
+            </button>
+            <button
+              type="button"
+              disabled={!canChangeMode}
+              onClick={() => setMode('cascade')}
+              className={[
+                'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors',
+                mode === 'cascade' ? 'bg-slate-200 text-slate-900' : 'text-slate-200 hover:bg-slate-800/60',
+                !canChangeMode ? 'opacity-50 cursor-not-allowed' : '',
+              ].join(' ')}
+            >
+              CASCADE
+            </button>
+          </div>
+        </div>
+
         <div
           className={`absolute top-0 inset-x-0 z-[70] pointer-events-none flex flex-col items-center justify-center pt-8 md:pt-12 transition-all duration-300 ${
             tier === 7 ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
@@ -121,7 +249,9 @@ export default function BalatroInferno() {
 
           <div
             className={`fixed left-1/2 -translate-x-1/2 top-[clamp(96px,14vh,180px)] sm:top-28 z-[220] transition-all duration-150 ${
-              isWin && tier !== 7 ? 'scale-100 opacity-100 translate-y-0' : 'scale-0 opacity-0 translate-y-10'
+              (showStepWinBanner || showCascadeTotalBanner) && tier !== 7
+                ? 'scale-100 opacity-100 translate-y-0'
+                : 'scale-0 opacity-0 translate-y-10'
             }`}
           >
             <div className="relative isolate">
@@ -134,19 +264,23 @@ export default function BalatroInferno() {
                 <div
                   className={`text-xl sm:text-2xl md:text-5xl uppercase text-white text-center leading-tight break-words ${TIER_COLORS[tier]?.text}`}
                 >
-                  {result?.name}
+                  {showCascadeTotalBanner ? 'TOTAL WIN' : result?.name}
                 </div>
                 <div className="text-base sm:text-lg md:text-2xl text-center mt-2 text-white break-words">
-                  +${result ? bet * result.multiplier : 0}
+                  +${showCascadeTotalBanner ? lastCascadeTotalWin : stepWinAmount}
                 </div>
+                {showCascadeTotalBanner && (
+                  <div className="text-[10px] sm:text-xs md:text-sm text-center mt-2 text-slate-300 uppercase tracking-[0.28em]">
+                    CASCADES x{lastCascadeStepsCount}
+                  </div>
+                )}
               </div>
-              <div className="absolute inset-0 z-0 animate-ping opacity-50 bg-white rounded-xl" />
             </div>
           </div>
 
           <div
             className={`fixed left-1/2 -translate-x-1/2 top-[clamp(112px,16vh,200px)] sm:top-32 z-[220] transition-all duration-150 ${
-              isLose ? 'scale-100 opacity-100 translate-y-0' : 'scale-0 opacity-0 translate-y-10'
+              isLose && !showCascadeTotalBanner ? 'scale-100 opacity-100 translate-y-0' : 'scale-0 opacity-0 translate-y-10'
             }`}
           >
             <div className="bg-[#18181b] border-[4px] border-slate-700 px-6 py-3 shadow-[8px_8px_0_rgba(0,0,0,0.8)] transform rotate-[2deg] animate-static-shake">
@@ -159,15 +293,32 @@ export default function BalatroInferno() {
 
           <div className="flex flex-col items-center gap-[clamp(10px,2vh,24px)] w-full mt-auto mb-[clamp(52px,7.5vh,130px)]">
             <div className="w-full max-w-5xl px-2 sm:px-4">
-              <div className="flex justify-center items-center perspective-1000 sm:grid sm:grid-cols-5 sm:justify-items-center sm:gap-[clamp(4px,1.5vw,24px)]">
+              <div
+                className={[
+                  'flex justify-center items-center perspective-1000 sm:grid sm:grid-cols-5 sm:justify-items-center sm:gap-[clamp(4px,1.5vw,24px)]',
+                  cascadeRefillFlash ? 'animate-cascade-refill-flash' : '',
+                ].join(' ')}
+              >
               {[0, 1, 2, 3, 4].map((i) => (
                 <div key={i} className={i === 0 ? '' : '-ml-[clamp(14px,4vw,26px)] sm:ml-0'}>
                   <Card
                     index={i}
                     card={hand[i]}
                     isVisible={i < hand.length}
-                    isWinning={gameState === 'result' && result?.winningIndices?.includes(i)}
-                    isGrayedOut={gameState === 'result' && result?.name !== 'High Card' && !result?.winningIndices?.includes(i)}
+                    isWinning={
+                      gameState === 'cascading'
+                        ? cascadeHighlightIndices.includes(i)
+                        : gameState === 'result' && result?.winningIndices?.includes(i)
+                    }
+                    isGrayedOut={
+                      gameState === 'cascading'
+                        ? cascadeShowDimming && !cascadeHighlightIndices.includes(i)
+                        : gameState === 'result' &&
+                          result?.name !== 'High Card' &&
+                          !result?.winningIndices?.includes(i)
+                    }
+                    isVanishing={gameState === 'cascading' && cascadeVanishingIndices.includes(i)}
+                    isAppearing={gameState === 'cascading' && cascadeAppearingIndices.includes(i)}
                     handTier={tier}
                   />
                 </div>
@@ -194,7 +345,7 @@ export default function BalatroInferno() {
             </button>
             <button
               onClick={handleDeal}
-              disabled={gameState === 'dealing' || gameState === 'suspense'}
+              disabled={isBusy}
               className={[
                 'w-full row-span-2 relative group overflow-hidden',
                 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500',

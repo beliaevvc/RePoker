@@ -36,6 +36,22 @@ export function getBestHand(cards: Card[]): HandResult {
    * Важно: `testCards` содержат поле `idx` — индекс карты в исходной руке (0..4).
    */
   const evaluateStandard = (testCards: IndexedCard[]): HandResult => {
+    /**
+     * Тай-брейк для одинаковых категорий.
+     *
+     * Важно: при 1–2 джокерах мы перебираем подстановки и выбираем максимум по `score`.
+     * Если `score` одинаковый (как было раньше для Pair/Two Pair и т.п.), побеждает
+     * первая найденная подстановка — что приводит к неверному выбору (например, пара
+     * с самой младшей картой из доступных).
+     *
+     * Поэтому мы кодируем “силу внутри категории” в младших разрядах `score`.
+     */
+    const SCORE_BUCKET = 1_000_000
+    const encodeRanksDesc = (ranksDesc: number[]) => {
+      // base-15 кодирование (ранги 2..14) — достаточно для лексикографического сравнения
+      return ranksDesc.reduce((acc, r) => acc * 15 + r, 0)
+    }
+
     const sorted = [...testCards].sort((a, b) => a.rank - b.rank)
     const ranks = sorted.map((c) => c.rank)
     const suits = sorted.map((c) => c.suit)
@@ -61,58 +77,85 @@ export function getBestHand(cards: Card[]): HandResult {
     const rankGroupsDesc = [...rankToIdxs.entries()]
       .map(([rank, idxs]) => ({ rank, idxs }))
       .sort((a, b) => b.idxs.length - a.idxs.length || b.rank - a.rank)
+    const ranksDesc = [...ranks].slice().sort((a, b) => b - a)
+    const straightHigh =
+      ranks.join(',') === '2,3,4,5,14' ? 5 : (ranks[ranks.length - 1] as number)
 
     if (isFlush && isStraight && ranks[4] === 14 && ranks[0] === 10)
       return {
         name: 'Royal Flush',
         multiplier: HAND_MULTIPLIERS['Royal Flush'],
-        score: 1000,
+        score: 1000 * SCORE_BUCKET,
         winningIndices: allIdx,
       }
     if (isFlush && isStraight)
       return {
         name: 'Straight Flush',
         multiplier: HAND_MULTIPLIERS['Straight Flush'],
-        score: 900,
+        score: 900 * SCORE_BUCKET + straightHigh,
         winningIndices: allIdx,
       }
     if (countsValues[0] === 5)
       return {
         name: 'Five of a Kind',
         multiplier: HAND_MULTIPLIERS['Five of a Kind'],
-        score: 850,
+        score: 850 * SCORE_BUCKET + (rankGroupsDesc[0]?.rank ?? 0),
         winningIndices: allIdx,
       } // Possible with Joker
     if (countsValues[0] === 4)
       return {
         name: 'Four of a Kind',
         multiplier: HAND_MULTIPLIERS['Four of a Kind'],
-        score: 800,
+        score:
+          800 * SCORE_BUCKET +
+          encodeRanksDesc([rankGroupsDesc[0]?.rank ?? 0, rankGroupsDesc[1]?.rank ?? 0]),
         winningIndices: rankGroupsDesc[0]?.idxs.slice().sort((a, b) => a - b) ?? [],
       }
     if (countsValues[0] === 3 && countsValues[1] === 2)
       return {
         name: 'Full House',
         multiplier: HAND_MULTIPLIERS['Full House'],
-        score: 700,
+        score:
+          700 * SCORE_BUCKET + encodeRanksDesc([rankGroupsDesc[0]?.rank ?? 0, rankGroupsDesc[1]?.rank ?? 0]),
         winningIndices: allIdx,
       }
     if (isFlush)
-      return { name: 'Flush', multiplier: HAND_MULTIPLIERS.Flush, score: 600, winningIndices: allIdx }
+      return {
+        name: 'Flush',
+        multiplier: HAND_MULTIPLIERS.Flush,
+        score: 600 * SCORE_BUCKET + encodeRanksDesc(ranksDesc),
+        winningIndices: allIdx,
+      }
     if (isStraight)
-      return { name: 'Straight', multiplier: HAND_MULTIPLIERS.Straight, score: 500, winningIndices: allIdx }
+      return {
+        name: 'Straight',
+        multiplier: HAND_MULTIPLIERS.Straight,
+        score: 500 * SCORE_BUCKET + straightHigh,
+        winningIndices: allIdx,
+      }
     if (countsValues[0] === 3)
       return {
         name: 'Three of a Kind',
         multiplier: HAND_MULTIPLIERS['Three of a Kind'],
-        score: 400,
+        score:
+          400 * SCORE_BUCKET +
+          encodeRanksDesc([
+            rankGroupsDesc[0]?.rank ?? 0,
+            ...(rankGroupsDesc.slice(1).map((g) => g.rank).sort((a, b) => b - a) as number[]),
+          ]),
         winningIndices: rankGroupsDesc[0]?.idxs.slice().sort((a, b) => a - b) ?? [],
       }
     if (countsValues[0] === 2 && countsValues[1] === 2)
       return {
         name: 'Two Pair',
         multiplier: HAND_MULTIPLIERS['Two Pair'],
-        score: 300,
+        score:
+          300 * SCORE_BUCKET +
+          encodeRanksDesc([
+            Math.max(rankGroupsDesc[0]?.rank ?? 0, rankGroupsDesc[1]?.rank ?? 0),
+            Math.min(rankGroupsDesc[0]?.rank ?? 0, rankGroupsDesc[1]?.rank ?? 0),
+            rankGroupsDesc[2]?.rank ?? 0,
+          ]),
         winningIndices: [...(rankGroupsDesc[0]?.idxs ?? []), ...(rankGroupsDesc[1]?.idxs ?? [])].sort(
           (a, b) => a - b,
         ),
@@ -122,11 +165,21 @@ export function getBestHand(cards: Card[]): HandResult {
       return {
         name: 'Pair',
         multiplier: HAND_MULTIPLIERS.Pair,
-        score: 200,
+        score:
+          200 * SCORE_BUCKET +
+          encodeRanksDesc([
+            pairRank ?? 0,
+            ...(ranksDesc.filter((r) => r !== pairRank) as number[]),
+          ]),
         winningIndices: pairRank != null ? idxsOfRank(pairRank) : [],
       }
     }
-    return { name: 'High Card', multiplier: 0, score: 0, winningIndices: [] }
+    return {
+      name: 'High Card',
+      multiplier: 0,
+      score: 0 * SCORE_BUCKET + encodeRanksDesc(ranksDesc),
+      winningIndices: [],
+    }
   }
 
   // 1. Ищем джокеров
