@@ -21,6 +21,11 @@
   box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
 }
 
+/* Safe-area padding (iOS) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 @keyframes spin-slow {
   from {
     transform: rotate(0deg);

@@ -1,16 +1,59 @@
-# React + Vite
+# RePoker — Balatro Inferno (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Небольшая “покерная” мини‑игра/прототип с акцентом на эффектный UI и джокеров (включая редкий “chaos mode” с дополнительными джокерами и debug‑кнопки `3J/4J/5J`).
 
-Currently, two official plugins are available:
+## Быстрый старт
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Требования: Node.js + npm.
 
-## React Compiler
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Открой `http://localhost:5173`.
 
-## Expanding the ESLint configuration
+## Команды
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **`npm run dev`**: дев‑сервер (HMR)
+- **`npm run build`**: production‑сборка
+- **`npm run preview`**: превью production‑сборки
+- **`npm run lint`**: ESLint
+- **`npm run test`**: unit‑тесты (Vitest)
+- **`npm run test:watch`**: Vitest в watch‑режиме
+
+## Архитектура (Clean Architecture, максимум)
+
+Код разделён на слои:
+
+- **`src/domain/`**: чистая доменная логика (карты, колода, оценка комбинаций).
+- **`src/application/`**: use‑cases (сценарии игры: раздача, ставка, расчет результата, debug‑хэнд).
+- **`src/infrastructure/`**: адаптеры к окружению (RNG, таймеры/clock).
+- **`src/ui/`**: React UI (экран, компоненты, контроллер‑хук).
+
+Точка входа экрана:
+- `src/BalatroInferno.jsx` — тонкий ре‑экспорт для совместимости.
+- `src/ui/screens/balatro-inferno/BalatroInferno.jsx` — основной UI‑экран.
+
+## Тестирование
+
+Vitest покрывает:
+- `src/domain/**` (оценка комбинаций, колода, джокеры/chaos ветки)
+- `src/application/**` (use‑cases)
+
+Запуск:
+
+```bash
+npm run test
+```
+
+## Важные инварианты проекта
+
+- **Поведение 1:1**: рефакторинг не должен ломать логику.
+- **Редкости/хаос**: вероятность дополнительных джокеров сохранена.
+- **Debug‑кнопки**: `3J/4J/5J` остаются (для проверки редких комбинаций).
+
+## Документация по процессу
+
+- Мастер‑план рефакторинга: `memory-bank/refactor-plan.md`
+- Текущий прогресс: `memory-bank/progress.md`
