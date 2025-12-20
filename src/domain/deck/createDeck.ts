@@ -1,7 +1,7 @@
 /**
  * Файл: src/domain/deck/createDeck.ts
  * Слой: domain
- * Назначение: создание и перемешивание колоды (включая джокеров и “chaos” шанс дополнительных джокеров).
+ * Назначение: создание и перемешивание колоды.
  *
  * Инварианты:
  * - Поведение и вероятности должны быть 1:1 с `src/BalatroInferno.jsx`.
@@ -13,38 +13,39 @@ import type { Card, Rank, Suit } from '../cards/types'
 import type { Rng } from '../ports/rng'
 
 /**
- * Создаёт новую колоду: 52 карты + 1 “golden joker”.
- * Редко добавляет дополнительные джокеры (chaos roll), чтобы было возможно 3+ джокеров.
+ * Создаёт базовую (неперемешанную) колоду:
+ * - 52 стандартные карты
+ * - 2 джокера
+ * Итого: 54 карты.
+ *
+ * Это **единственный источник истины** по составу колоды. Любые debug-сценарии/симуляции
+ * должны опираться на эту функцию, чтобы не расходиться с основной механикой.
+ */
+export function createBaseDeck(createId: () => string): Card[] {
+  const deck: Card[] = []
+
+  // 52 стандартные карты
+  for (const suit of SUITS) {
+    for (const rank of RANKS) {
+      deck.push({ suit: suit as Suit, rank: rank as Rank, id: createId() })
+    }
+  }
+
+  // 2 джокера
+  deck.push({ suit: 'joker', rank: 15, id: createId() })
+  deck.push({ suit: 'joker', rank: 15, id: createId() })
+
+  return deck
+}
+
+/**
+ * Создаёт новую колоду: базовая колода + перемешивание.
  *
  * @param {Rng} rng источник случайности (порт)
  * @returns {Card[]} перемешанная колода
  */
 export function createDeck(rng: Rng): Card[] {
-  const deck: Card[] = []
-
-  for (const suit of SUITS) {
-    for (const rank of RANKS) {
-      deck.push({ suit: suit as Suit, rank: rank as Rank, id: rng.randomFloat().toString(36).slice(2, 11) })
-    }
-  }
-
-  // ADD ONE GOLDEN JOKER
-  deck.push({ suit: 'joker', rank: 15, id: 'joker-card' })
-
-  // RARE: Add extra jokers (Chaos Mode probability)
-  // Chance to have a deck capable of 3+ jokers
-  const chaosRoll = rng.randomFloat()
-  if (chaosRoll < 0.001) {
-    // 0.1% chance: Super Loaded Deck (up to 5 jokers)
-    deck.push({ suit: 'joker', rank: 15, id: 'joker-card-2' })
-    deck.push({ suit: 'joker', rank: 15, id: 'joker-card-3' })
-    deck.push({ suit: 'joker', rank: 15, id: 'joker-card-4' })
-    deck.push({ suit: 'joker', rank: 15, id: 'joker-card-5' })
-  } else if (chaosRoll < 0.005) {
-    // 0.4% chance: Loaded Deck (up to 3 jokers)
-    deck.push({ suit: 'joker', rank: 15, id: 'joker-card-2' })
-    deck.push({ suit: 'joker', rank: 15, id: 'joker-card-3' })
-  }
+  const deck = createBaseDeck(() => rng.randomFloat().toString(36).slice(2, 11))
 
   // Перемешивание 1:1 (не крипто‑качество, но соответствует текущему поведению).
   return deck.sort(() => rng.randomFloat() - 0.5)

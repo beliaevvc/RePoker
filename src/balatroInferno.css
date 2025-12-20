@@ -259,6 +259,31 @@
   animation: bounce-subtle 1s ease-in-out infinite;
 }
 
+/* CASCADE MULT: pop + glow при смене уровня множителя */
+@keyframes cascade-mult-pop {
+  0% {
+    transform: translateY(2px) scale(0.94);
+    filter: brightness(1) saturate(1);
+  }
+  55% {
+    transform: translateY(-1px) scale(1.12);
+    filter: brightness(1.15) saturate(1.2);
+  }
+  100% {
+    transform: translateY(0px) scale(1);
+    filter: brightness(1) saturate(1);
+  }
+}
+.animate-cascade-mult-pop {
+  animation: cascade-mult-pop 0.22s cubic-bezier(0.2, 1.1, 0.2, 1) both;
+}
+
+.cascade-mult-glow {
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 0.12),
+    0 0 28px rgba(147, 197, 253, 0.18);
+}
+
 @keyframes glitch {
   0% {
     transform: translate(0) rotate(-3deg);
@@ -532,6 +557,145 @@
 
 .animate-shake-insane {
   animation: shake-insane 0.4s linear infinite;
+}
+
+/* --- JACKPOT CINEMATIC (MAX WIN reveal after TOTAL WIN) --- */
+/* Активируется классом `.maxwin-cinematic` на корневом контейнере. */
+
+@keyframes maxwin-jitter-ramp {
+  0% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+  15% {
+    transform: translate(-1px, 1px);
+    filter: contrast(1.05) saturate(1.05);
+  }
+  30% {
+    transform: translate(2px, -2px);
+    filter: contrast(1.12) saturate(1.12);
+  }
+  45% {
+    transform: translate(-3px, 3px);
+    filter: contrast(1.18) saturate(1.18);
+  }
+  60% {
+    transform: translate(5px, -4px);
+    filter: contrast(1.28) saturate(1.2) blur(0.3px);
+  }
+  75% {
+    transform: translate(-7px, 6px);
+    filter: contrast(1.35) saturate(1.25) blur(0.6px);
+  }
+  90% {
+    transform: translate(9px, -8px);
+    filter: contrast(1.45) saturate(1.3) blur(0.9px);
+  }
+  100% {
+    transform: translate(-12px, 10px);
+    filter: contrast(1.55) saturate(1.35) blur(1.1px);
+  }
+}
+
+.maxwin-cinematic-shake {
+  /* 1.2s пауза после финального баннера → затем “нарастание” тряски */
+  animation: maxwin-jitter-ramp 0.9s steps(1, end) 1.25s both;
+}
+
+@keyframes maxwin-noise-flicker {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  20% {
+    opacity: 0.35;
+    transform: translate(-2px, 1px);
+  }
+  40% {
+    opacity: 0.55;
+    transform: translate(2px, -1px);
+  }
+  60% {
+    opacity: 0.45;
+    transform: translate(-3px, 2px);
+  }
+  80% {
+    opacity: 0.65;
+    transform: translate(3px, -2px);
+  }
+  100% {
+    opacity: 0.8;
+    transform: translate(0, 0);
+  }
+}
+
+.maxwin-cinematic-noise {
+  opacity: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.03),
+      rgba(255, 255, 255, 0.03) 1px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 3px
+    ),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08), transparent 55%);
+  mix-blend-mode: overlay;
+  animation: maxwin-noise-flicker 0.55s steps(1, end) 1.15s both;
+}
+
+@keyframes maxwin-blackout {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.92;
+  }
+}
+
+.maxwin-cinematic-blackout {
+  opacity: 0;
+  background: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.98));
+  animation: maxwin-blackout 0.28s ease-out 2.05s both;
+}
+
+@keyframes maxwin-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.02);
+    filter: blur(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
+.maxwin-cinematic-pop {
+  opacity: 0;
+  transform-origin: 50% 50%;
+  animation: maxwin-reveal 0.42s cubic-bezier(0.15, 1.35, 0.2, 1) 2.18s both;
+}
+
+@keyframes maxwin-pop-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-3px, 3px);
+  }
+  50% {
+    transform: translate(3px, -3px);
+  }
+  75% {
+    transform: translate(-3px, 3px);
+  }
+}
+
+.maxwin-cinematic-pop-inner {
+  animation: maxwin-pop-shake 0.09s linear infinite 2.65s;
 }
 
 

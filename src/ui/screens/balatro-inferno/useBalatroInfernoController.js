@@ -18,6 +18,8 @@ import { startDealUseCase } from '../../../application/game/usecases/startDeal'
 import { resolveResultUseCase } from '../../../application/game/usecases/resolveResult'
 import { forceHandUseCase } from '../../../application/game/usecases/forceHand'
 import { applyCascadeStepUseCase } from '../../../application/game/usecases/applyCascadeStep'
+import { buildJackpotSimulationScenario } from '../../../application/game/debug/jackpotSimulation'
+import { DEFAULT_ANTE } from '../../../application/game/constants/ante'
 
 import { nativeRng } from '../../../infrastructure/rng/nativeRng'
 import { browserClock } from '../../../infrastructure/clock/browserClock'
@@ -59,6 +61,8 @@ function writeStoredGameMode(mode) {
  *   isLose: boolean,
  *   shakeClass: string,
  *   cascadeHighlightIndices: number[],
+ *   cascadeWinStepNumber: number,
+ *   cascadeMultiplier: number,
  *   setMode: (mode: 'normal'|'cascade') => void,
  *   handleDeal: () => void,
  *   adjustBet: (amount: number) => void,
@@ -67,7 +71,7 @@ function writeStoredGameMode(mode) {
  */
 export function useBalatroInfernoController() {
   const [balance, setBalance] = useState(100)
-  const [bet, setBet] = useState(10)
+  const [bet, setBet] = useState(DEFAULT_ANTE)
   const [streak, setStreak] = useState(0)
   const [mode, setMode] = useState(() => readStoredGameMode())
   const [hand, setHand] = useState([])
@@ -78,8 +82,12 @@ export function useBalatroInfernoController() {
 
   const [cascadeStepIndex, setCascadeStepIndex] = useState(0)
   const [cascadeRunningTotalWin, setCascadeRunningTotalWin] = useState(0)
+  const [cascadeWinStepNumber, setCascadeWinStepNumber] = useState(0)
+  const [cascadeMultiplier, setCascadeMultiplier] = useState(1)
   const [lastCascadeTotalWin, setLastCascadeTotalWin] = useState(0)
   const [lastCascadeStepsCount, setLastCascadeStepsCount] = useState(0)
+  const [lastWasJackpot, setLastWasJackpot] = useState(false)
+  const [lastJackpotAmount, setLastJackpotAmount] = useState(0)
   const [cascadeVanishingIndices, setCascadeVanishingIndices] = useState([])
   const [cascadeAppearingIndices, setCascadeAppearingIndices] = useState([])
   const [cascadeHighlightIndices, setCascadeHighlightIndices] = useState([])
@@ -96,6 +104,8 @@ export function useBalatroInfernoController() {
   const cascadeLogicalHandRef = useRef(null)
   const cascadeTotalWinRef = useRef(0)
   const cascadeLastWinResultRef = useRef(null)
+  const cascadeDidJackpotRef = useRef(false)
+  const cascadeJackpotAmountRef = useRef(0)
   // refs для значений, которые меняются во время шага каскада (чтобы не перезапускать эффект)
   const betRef = useRef(bet)
   const deckRef = useRef(deck)
@@ -126,6 +136,8 @@ export function useBalatroInfernoController() {
   const clearCascadeActive = useCallback(() => {
     setCascadeStepIndex(0)
     setCascadeRunningTotalWin(0)
+    setCascadeWinStepNumber(0)
+    setCascadeMultiplier(1)
     setCascadeVanishingIndices([])
     setCascadeAppearingIndices([])
     setCascadeHighlightIndices([])
@@ -137,12 +149,16 @@ export function useBalatroInfernoController() {
     cascadeLogicalHandRef.current = null
     cascadeTotalWinRef.current = 0
     cascadeLastWinResultRef.current = null
+    cascadeDidJackpotRef.current = false
+    cascadeJackpotAmountRef.current = 0
   }, [])
 
   const resetCascade = useCallback(() => {
     clearCascadeActive()
     setLastCascadeTotalWin(0)
     setLastCascadeStepsCount(0)
+    setLastWasJackpot(false)
+    setLastJackpotAmount(0)
     setDebugSnapshot(null)
     setDebugLastWinSnapshot(null)
   }, [clearCascadeActive])
@@ -211,18 +227,28 @@ export function useBalatroInfernoController() {
     }
 
     // Один шаг каскада считается от “логической” руки, а не от UI-анимаций.
-    const step = applyCascadeStepUseCase(
-      { hand: logicalHand, bet: betRef.current, deck: deckRef.current, dealIndex: dealIndexRef.current },
-      { refillDeck: () => createDeck(nativeRng) },
-    )
+    const winStepNumber = cascadeStepIndex + 1
+    const step = applyCascadeStepUseCase({
+      hand: logicalHand,
+      bet: betRef.current,
+      deck: deckRef.current,
+      dealIndex: dealIndexRef.current,
+      winStepNumber,
+    })
     const computed = {
       token,
       stepIndex: cascadeStepIndex,
+      winStepNumber,
       logicalHand: logicalHand.slice(),
       evalResult: step.evalResult,
       winningIndices: step.winningIndices,
       didWin: step.didWin,
       winAmount: step.winAmount,
+      baseWinAmount: step.baseWinAmount,
+      cascadeMultiplier: step.cascadeMultiplier,
+      didDeckShortage: step.didDeckShortage,
+      didJackpot: step.didJackpot,
+      jackpotAmount: step.jackpotAmount,
       dealIndexBefore: dealIndexRef.current,
       deckLenBefore: deckRef.current.length,
     }
@@ -232,18 +258,17 @@ export function useBalatroInfernoController() {
     if (!step.didWin) {
       const totalWin = cascadeTotalWinRef.current
       const lastWinResult = cascadeLastWinResultRef.current
+      const wasJackpot = cascadeDidJackpotRef.current
+      const jackpotAmount = cascadeJackpotAmountRef.current
 
       const finishTimer = browserClock.setTimeout(() => {
         if (cascadeAnimTokenRef.current !== token) return
-        if (totalWin > 0) {
-          setBalance((prev) => prev + totalWin)
-          setStreak((prev) => Math.min(prev + 1, 5))
-        } else {
-          setStreak(0)
-        }
+        if (totalWin > 0) setBalance((prev) => prev + totalWin)
 
         setLastCascadeTotalWin(totalWin)
         setLastCascadeStepsCount(cascadeStepIndex)
+        setLastWasJackpot(wasJackpot)
+        setLastJackpotAmount(jackpotAmount)
 
         // ВАЖНО (UX): на финале каскада рука уже финальная (после добора) и может быть проигрышной.
         // Поэтому в `result` кладём фактический финальный eval (обычно High Card), а totalWin показываем отдельным баннером.
@@ -282,6 +307,8 @@ export function useBalatroInfernoController() {
       setResult(step.evalResult)
       setShowWinBanner(true)
       setWinBannerAmount(step.winAmount)
+      setCascadeWinStepNumber(winStepNumber)
+      setCascadeMultiplier(step.cascadeMultiplier)
       setCascadeHighlightIndices(winningIdx)
     }, 60)
 
@@ -330,7 +357,11 @@ export function useBalatroInfernoController() {
       // важно: обновляем refs сразу, чтобы следующий шаг считался по актуальным данным
       deckRef.current = step.deckAfter
       dealIndexRef.current = step.dealIndexAfter
-      cascadeTotalWinRef.current = cascadeTotalWinRef.current + step.winAmount
+      cascadeTotalWinRef.current = cascadeTotalWinRef.current + step.winAmount + (step.jackpotAmount ?? 0)
+      if ((step.jackpotAmount ?? 0) > 0) {
+        cascadeDidJackpotRef.current = true
+        cascadeJackpotAmountRef.current = cascadeJackpotAmountRef.current + (step.jackpotAmount ?? 0)
+      }
       cascadeLastWinResultRef.current = step.evalResult
       cascadeLogicalHandRef.current = step.handAfter
 
@@ -340,6 +371,7 @@ export function useBalatroInfernoController() {
         eval: step.evalResult?.name ?? null,
         winIdx: step.winningIndices ?? [],
         winAmount: step.winAmount,
+        jackpotAmount: step.jackpotAmount ?? 0,
         totalWinAfter: cascadeTotalWinRef.current,
         handAfter: step.handAfter.map((c) => `${c?.rank ?? '?'}:${c?.suit ?? '?'}`),
       })
@@ -353,8 +385,35 @@ export function useBalatroInfernoController() {
     schedule(() => setCascadeRefillFlash(true), appearStart + sortedIdx.length * appearDelay + 80)
     schedule(() => setCascadeRefillFlash(false), appearStart + sortedIdx.length * appearDelay + 260)
 
-    // 7) Next step
-    schedule(() => setCascadeStepIndex((prev) => prev + 1), appearStart + sortedIdx.length * appearDelay + 520)
+    // 7) Next step (или завершение каскада при нехватке карт в колоде)
+    if (step.didDeckShortage) {
+      schedule(() => {
+        const totalWin = cascadeTotalWinRef.current
+        const lastWinResult = cascadeLastWinResultRef.current
+        const wasJackpot = cascadeDidJackpotRef.current
+        const jackpotAmount = cascadeJackpotAmountRef.current
+
+        if (totalWin > 0) setBalance((prev) => prev + totalWin)
+
+        setLastCascadeTotalWin(totalWin)
+        setLastCascadeStepsCount(cascadeStepIndex + 1)
+        setLastWasJackpot(wasJackpot)
+        setLastJackpotAmount(jackpotAmount)
+
+        setDebugSnapshot({
+          ...computed,
+          phase: 'finish(deck-shortage)',
+          totalWin,
+          lastWinResultName: lastWinResult?.name ?? null,
+        })
+
+        setResult(step.evalResult)
+        setGameState('result')
+        clearCascadeActive()
+      }, appearStart + sortedIdx.length * appearDelay + 520)
+    } else {
+      schedule(() => setCascadeStepIndex((prev) => prev + 1), appearStart + sortedIdx.length * appearDelay + 520)
+    }
 
     return () => timers.forEach((t) => browserClock.clearTimeout(t))
   }, [
@@ -373,6 +432,46 @@ export function useBalatroInfernoController() {
     setDealIndex(next.dealIndex)
     setDeck(next.deck)
     setGameState(next.gameState)
+  }
+
+  const runJackpotSimulation = () => {
+    if (mode !== 'cascade') return
+    if (gameState !== 'idle' && gameState !== 'result') return
+    if (balance < bet) return
+
+    resetCascade()
+    setResult(null)
+    setShowWinBanner(false)
+    setCascadeHighlightIndices([])
+
+    // “как PLAY”: списываем ставку
+    setBalance((prev) => prev - bet)
+
+    const scenarioIdx = Math.floor(nativeRng.randomFloat() * 5)
+    const scenario = buildJackpotSimulationScenario(scenarioIdx)
+
+    // Пропускаем стадию dealing (мгновенно “раздали” 5 карт) и идём в suspense → cascading.
+    setDeck(scenario.deck)
+    setDealIndex(scenario.dealIndex)
+    setHand(scenario.hand)
+    setGameState('suspense')
+  }
+
+  const dismissJackpotCinematic = () => {
+    // “Клик в любом месте” во время MAX WIN синематики возвращает на главный экран
+    if (gameState !== 'result') return
+    if (!lastWasJackpot) return
+
+    // очищаем финальные баннеры/флаги, возвращаемся в idle
+    setLastWasJackpot(false)
+    setLastJackpotAmount(0)
+    setLastCascadeTotalWin(0)
+    setLastCascadeStepsCount(0)
+    setShowWinBanner(false)
+    setWinBannerAmount(0)
+    setResult(null)
+    setHand([])
+    setGameState('idle')
   }
 
   const adjustBet = (amount) => {
@@ -419,9 +518,13 @@ export function useBalatroInfernoController() {
     cascadeStepIndex,
     cascadeStepsCount: 0,
     cascadeRunningTotalWin,
+    cascadeWinStepNumber,
+    cascadeMultiplier,
     cascadeFinalTotalWin: 0,
     lastCascadeTotalWin,
     lastCascadeStepsCount,
+    lastWasJackpot,
+    lastJackpotAmount,
     cascadeVanishingIndices,
     cascadeAppearingIndices,
     cascadeHighlightIndices,
@@ -435,6 +538,8 @@ export function useBalatroInfernoController() {
     handleDeal,
     adjustBet,
     forceHand,
+    runJackpotSimulation,
+    dismissJackpotCinematic,
   }
 }
 

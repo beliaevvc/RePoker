@@ -156,19 +156,7 @@ function JokerVisual() {
  * @returns {JSX.Element}
  */
 function PixelFire({ tier }) {
-  const isMaxWin = tier === 7
   const colors = TIER_COLORS[tier]?.flame || TIER_COLORS[0].flame
-
-  if (isMaxWin) {
-    return (
-      <div className="absolute -inset-4 z-[-1] rounded-xl opacity-100 blur-sm overflow-hidden">
-        <div className="w-full h-full bg-gradient-to-t from-yellow-600 via-red-600 to-black animate-pulse-fast mix-blend-hard-light" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-80 animate-fire-rise bg-[length:30px_30px]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-yellow-100/60 to-transparent animate-fire-wave" />
-        <div className="absolute inset-0 bg-white/10 animate-pulse mix-blend-overlay" />
-      </div>
-    )
-  }
 
   return (
     <div className="absolute -inset-4 z-[-1] rounded-xl opacity-90 blur-sm mix-blend-screen overflow-hidden">

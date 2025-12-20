@@ -24,9 +24,11 @@ export type ResolveResultOutput = Pick<GameModel, 'balance' | 'streak' | 'result
 export function resolveResultUseCase(input: ResolveResultInput): ResolveResultOutput {
   const { balance, bet, streak, evalResult } = input
 
+  const cleanMoney = (n: number) => Math.round(n * 1e10) / 1e10
+
   if (evalResult.multiplier > 0) {
     return {
-      balance: balance + bet * evalResult.multiplier,
+      balance: cleanMoney(balance + bet * evalResult.multiplier),
       streak: Math.min(streak + 1, 5),
       result: evalResult,
       gameState: 'result',

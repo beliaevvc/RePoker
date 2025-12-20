@@ -8,12 +8,8 @@
  */
 
 export const HAND_TIERS: Record<string, number> = {
-  '5 Jokers': 7,
-  '4 Jokers': 6,
-  '3 Jokers': 5,
   'Royal Flush': 4,
   'Straight Flush': 4,
-  'Five of a Kind': 4, // With Joker
   'Four of a Kind': 3,
   'Full House': 3,
   Flush: 2,
@@ -25,19 +21,16 @@ export const HAND_TIERS: Record<string, number> = {
 }
 
 export const HAND_MULTIPLIERS: Record<string, number> = {
-  '5 Jokers': 150000,
-  '4 Jokers': 10000,
-  '3 Jokers': 5000,
-  'Royal Flush': 1000,
-  'Straight Flush': 200,
-  'Five of a Kind': 150,
-  'Four of a Kind': 60,
-  'Full House': 30,
+  // Новая таблица выплат (x на ставку игрока)
+  Pair: 0.3,
+  'Two Pair': 1,
+  'Three of a Kind': 5,
+  Straight: 10,
   Flush: 20,
-  Straight: 15,
-  'Three of a Kind': 8,
-  'Two Pair': 4,
-  Pair: 2,
+  'Full House': 50,
+  'Four of a Kind': 100,
+  'Straight Flush': 200,
+  'Royal Flush': 1000,
   'High Card': 0,
 }
 

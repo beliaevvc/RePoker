@@ -13,9 +13,6 @@ export const TIER_COLORS = {
   2: { flame: 'from-emerald-400 via-green-500 to-teal-600', text: 'text-emerald-200' },
   3: { flame: 'from-fuchsia-500 via-purple-600 to-indigo-600', text: 'text-fuchsia-200' },
   4: { flame: 'from-orange-500 via-red-500 to-yellow-500', text: 'text-amber-200' },
-  5: { flame: 'from-rose-500 via-red-600 to-orange-600', text: 'text-rose-200' }, // 3 Jokers
-  6: { flame: 'from-purple-600 via-pink-600 to-red-600', text: 'text-purple-100' }, // 4 Jokers
-  7: { flame: 'from-yellow-400 via-orange-500 to-red-600', text: 'text-yellow-100' }, // 5 Jokers (MAX WIN)
 }
 
 

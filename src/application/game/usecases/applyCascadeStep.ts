@@ -6,31 +6,41 @@
  * Важно:
  * - Это “чистая” логика, без UI/таймеров.
  * - Если multiplier === 0 — шаг невыигрышный, колода/индекс/рука не меняются.
- * - Если deck закончился — вызываем `refillDeck()` и продолжаем добор.
+ * - Если deck закончился — **НЕ пополняем**: недостающие карты становятся `null`,
+ *   а вызывающая сторона должна завершить каскад после этого шага.
  */
 
 import type { Card } from '../../../domain/cards/types'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 import type { HandResult } from '../../../domain/hand-evaluator/getBestHand'
+import { getCascadeMultiplierForWinStep } from '../cascadeMultiplier'
+
+export type TableCard = Card | null
 
 export type ApplyCascadeStepInput = {
   hand: Card[]
   bet: number
   deck: Card[]
   dealIndex: number
-}
-
-export type ApplyCascadeStepDeps = {
-  refillDeck: () => Card[]
+  /**
+   * Номер выигрышного шага каскада (1..N).
+   * Важно: счётчик увеличивается только после win-шагов.
+   */
+  winStepNumber: number
 }
 
 export type ApplyCascadeStepOutput = {
   didWin: boolean
   evalResult: HandResult
+  cascadeMultiplier: number
+  baseWinAmount: number
   winAmount: number
+  didDeckShortage: boolean
+  didJackpot: boolean
+  jackpotAmount: number
   winningIndices: number[]
   handBefore: Card[]
-  handAfter: Card[]
+  handAfter: TableCard[]
   deckAfter: Card[]
   dealIndexAfter: number
 }
@@ -41,9 +51,13 @@ function assertHandLength5(hand: Card[]) {
   }
 }
 
-export function applyCascadeStepUseCase(input: ApplyCascadeStepInput, deps: ApplyCascadeStepDeps): ApplyCascadeStepOutput {
+const JACKPOT_MULTIPLIER = 150_000
+
+export function applyCascadeStepUseCase(input: ApplyCascadeStepInput): ApplyCascadeStepOutput {
   const { hand, bet } = input
   assertHandLength5(hand)
+
+  const cleanMoney = (n: number) => Math.round(n * 1e10) / 1e10
 
   const evalResult = getBestHand(hand)
   const winningIndices = evalResult.winningIndices ?? []
@@ -53,7 +67,12 @@ export function applyCascadeStepUseCase(input: ApplyCascadeStepInput, deps: Appl
     return {
       didWin: false,
       evalResult,
+      cascadeMultiplier: 1,
+      baseWinAmount: 0,
       winAmount: 0,
+      didDeckShortage: false,
+      didJackpot: false,
+      jackpotAmount: 0,
       winningIndices,
       handBefore: hand.slice(),
       handAfter: hand.slice(),
@@ -62,32 +81,46 @@ export function applyCascadeStepUseCase(input: ApplyCascadeStepInput, deps: Appl
     }
   }
 
+  const cascadeMultiplier = getCascadeMultiplierForWinStep(input.winStepNumber)
+
   let deck = input.deck.slice()
   let dealIndex = input.dealIndex
+  let didDeckShortage = false
 
-  const draw = (): Card => {
+  const draw = (): Card | null => {
     if (dealIndex >= deck.length) {
-      deck = deps.refillDeck()
-      dealIndex = 0
+      didDeckShortage = true
+      return null
     }
     const card = deck[dealIndex]
-    if (!card) throw new Error('refillDeck() вернул пустую колоду или dealIndex вышел за границы')
+    if (!card) {
+      didDeckShortage = true
+      return null
+    }
     dealIndex += 1
     return card
   }
 
   const handBefore = hand.slice()
-  const handAfter = hand.slice()
+  const handAfter: TableCard[] = hand.slice()
   for (const idx of winningIndices) {
     handAfter[idx] = draw()
   }
 
-  const winAmount = bet * evalResult.multiplier
+  const baseWinAmount = cleanMoney(bet * evalResult.multiplier)
+  const winAmount = cleanMoney(baseWinAmount * cascadeMultiplier)
+  const didJackpot = didDeckShortage && handAfter.every((c) => c === null) && dealIndex >= deck.length
+  const jackpotAmount = didJackpot ? cleanMoney(bet * JACKPOT_MULTIPLIER) : 0
 
   return {
     didWin: true,
     evalResult,
+    cascadeMultiplier,
+    baseWinAmount,
     winAmount,
+    didDeckShortage,
+    didJackpot,
+    jackpotAmount,
     winningIndices,
     handBefore,
     handAfter: handAfter.slice(),

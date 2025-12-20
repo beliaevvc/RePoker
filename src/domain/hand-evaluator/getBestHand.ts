@@ -95,13 +95,6 @@ export function getBestHand(cards: Card[]): HandResult {
         score: 900 * SCORE_BUCKET + straightHigh,
         winningIndices: allIdx,
       }
-    if (countsValues[0] === 5)
-      return {
-        name: 'Five of a Kind',
-        multiplier: HAND_MULTIPLIERS['Five of a Kind'],
-        score: 850 * SCORE_BUCKET + (rankGroupsDesc[0]?.rank ?? 0),
-        winningIndices: allIdx,
-      } // Possible with Joker
     if (countsValues[0] === 4)
       return {
         name: 'Four of a Kind',
@@ -189,30 +182,9 @@ export function getBestHand(cards: Card[]): HandResult {
 
   const jokerCount = jokerIndices.length
 
-  // SPECIAL JOKER HANDS
-  if (jokerCount === 5) {
-    return {
-      name: '5 Jokers',
-      multiplier: HAND_MULTIPLIERS['5 Jokers'],
-      score: 100000,
-      winningIndices: [0, 1, 2, 3, 4],
-    }
-  }
-  if (jokerCount === 4) {
-    return {
-      name: '4 Jokers',
-      multiplier: HAND_MULTIPLIERS['4 Jokers'],
-      score: 50000,
-      winningIndices: jokerIndices,
-    }
-  }
-  if (jokerCount === 3) {
-    return {
-      name: '3 Jokers',
-      multiplier: HAND_MULTIPLIERS['3 Jokers'],
-      score: 10000,
-      winningIndices: jokerIndices,
-    }
+  // В основной колоде максимум 2 джокера. При большем количестве считаем это ошибкой данных/отладки.
+  if (jokerCount > 2) {
+    throw new Error(`getBestHand: jokerCount > 2 не поддерживается (получено: ${jokerCount})`)
   }
 
   if (jokerCount === 0) {

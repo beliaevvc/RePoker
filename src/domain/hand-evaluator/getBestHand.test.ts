@@ -27,30 +27,6 @@ describe('getBestHand', () => {
     expect(res.winningIndices).toEqual([0, 1, 2, 3, 4])
   })
 
-  it('распознаёт 5 Jokers', () => {
-    const hand = [c('joker', 15, 'j1'), c('joker', 15, 'j2'), c('joker', 15, 'j3'), c('joker', 15, 'j4'), c('joker', 15, 'j5')]
-    const res = getBestHand(hand)
-    expect(res.name).toBe('5 Jokers')
-    expect(res.multiplier).toBe(150000)
-    expect(res.winningIndices).toEqual([0, 1, 2, 3, 4])
-  })
-
-  it('распознаёт 4 Jokers', () => {
-    const hand = [c('joker', 15, 'j1'), c('joker', 15, 'j2'), c('joker', 15, 'j3'), c('joker', 15, 'j4'), c('spades', 2)]
-    const res = getBestHand(hand)
-    expect(res.name).toBe('4 Jokers')
-    expect(res.multiplier).toBe(10000)
-    expect(res.winningIndices.sort()).toEqual([0, 1, 2, 3])
-  })
-
-  it('распознаёт 3 Jokers', () => {
-    const hand = [c('joker', 15, 'j1'), c('joker', 15, 'j2'), c('joker', 15, 'j3'), c('spades', 2), c('clubs', 3)]
-    const res = getBestHand(hand)
-    expect(res.name).toBe('3 Jokers')
-    expect(res.multiplier).toBe(5000)
-    expect(res.winningIndices.sort()).toEqual([0, 1, 2])
-  })
-
   it('с 1 джокером собирает Royal Flush из 10-J-Q-K + joker', () => {
     const hand = [c('hearts', 10), c('hearts', 11), c('hearts', 12), c('hearts', 13), c('joker', 15, 'j1')]
     const res = getBestHand(hand)
@@ -59,12 +35,25 @@ describe('getBestHand', () => {
     expect(res.winningIndices).toEqual([0, 1, 2, 3, 4])
   })
 
-  it('с 2 джокерами находит Five of a Kind (9-9-9 + joker + joker)', () => {
+  it('Pair платит 0.3x', () => {
+    const hand = [c('hearts', 2), c('spades', 2), c('clubs', 9), c('diamonds', 5), c('hearts', 7)]
+    const res = getBestHand(hand)
+    expect(res.name).toBe('Pair')
+    expect(res.multiplier).toBe(0.3)
+  })
+
+  it('Two Pair платит 1x', () => {
+    const hand = [c('hearts', 2), c('spades', 2), c('clubs', 9), c('diamonds', 9), c('hearts', 7)]
+    const res = getBestHand(hand)
+    expect(res.name).toBe('Two Pair')
+    expect(res.multiplier).toBe(1)
+  })
+
+  it('Four of a Kind платит 100x (без Five of a Kind)', () => {
     const hand = [c('spades', 9), c('hearts', 9), c('clubs', 9), c('joker', 15, 'j1'), c('joker', 15, 'j2')]
     const res = getBestHand(hand)
-    expect(res.name).toBe('Five of a Kind')
-    expect(res.multiplier).toBe(150)
-    expect(res.winningIndices).toEqual([0, 1, 2, 3, 4])
+    expect(res.name).toBe('Four of a Kind')
+    expect(res.multiplier).toBe(100)
   })
 
   it('с 1 джокером при "одной паре" выбирает пару со старшей картой (а не с младшей)', () => {

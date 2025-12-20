@@ -1,13 +1,37 @@
 # Прогресс
 
 ## Статус
+- Сделано: UI — `JACKPOT SIM (QA)` перенесена вправо от кнопки PLAY и сделана еле заметной.
+- Гейты: `npm run lint`, `npm run build` — пройдены.
+- В работе: множитель каскада (1×→2×→3×→5×) + UI-индикатор, замена streak в CASCADE.
+- Сделано (механика): добавлен `getCascadeMultiplierForWinStep` + unit-тесты; `applyCascadeStepUseCase` принимает `winStepNumber` и считает `winAmount = baseWinAmount * cascadeMultiplier`, джекпот не множится.
+- Сделано (интеграция): `useBalatroInfernoController` передаёт `winStepNumber = cascadeStepIndex+1`, копит totalWin с учётом множителя и **не меняет streak** в CASCADE; добавлены состояния `cascadeWinStepNumber/cascadeMultiplier`.
+- Сделано (UI): добавлен `CascadeMultiplierIndicator` (в CASCADE вместо `ElectricPlasmaOrbs`) + строка `CASCADE MULT xN` в step win-баннере.
+- Сделано (UI): в финальный баннер `TOTAL WIN` добавлена строка `MAX MULT xN` (максимальный достигнутый множитель по win-шагам каскада).
+- Гейты (после множителя каскада): `npm run test`, `npm run lint`, `npm run build` — пройдены.
+- Сделано: переделаны ставки **Ante** — введён фиксированный список (0.20…100), дефолт **1.00**, кнопки `+/-` переключают по списку, суммы в UI отображаются с 2 знаками после запятой.
+- Гейты (после Ante): `npm run test`, `npm run lint`, `npm run build` — пройдены.
+- В работе: обновление выплат за комбинации.
+- Сделано: обновлена доменная таблица выплат (`HAND_MULTIPLIERS`) под новую спецификацию (Pair=0.3x, Two Pair=1x, ...), удалены `3/4/5 Jokers` и `Five of a Kind`.
+- Сделано: `getBestHand` больше не возвращает удалённые комбинации; добавлен guard на `jokerCount > 2`.
+- Сделано: debug форс руки теперь поддерживает только 1–2 джокера (UI + `forceHandUseCase`).
+- Сделано: добавлена нормализация денег в application use-cases (чтобы не было `3.5999999999999996` при 0.3×bet).
+- Сделано: UI-константы/эффекты очищены от упоминаний `3/4/5 Jokers` и tier=7.
+- Гейты пройдены: `npm run test`, `npm run lint`, `npm run build` — зелёные.
 - Завершено: режим **каскада** + переключение режимов (normal/cascade) + визуальный таймлайн, гейты зелёные.
+- Завершено: каскад **без автопополнения колоды** — при нехватке добора недостающие позиции становятся `null`, каскад завершается после шага.
+- Завершено: добавлен **джекпот 150 000× bet**, если после win-шага каскада стол полностью пуст и колода пуста (начисляется сверху).
+- Завершено: добавлена QA-фича **JACKPOT SIM** (кнопка в CASCADE), запускающая один из 5 сценариев, которые гарантированно приводят к джекпоту за несколько шагов.
+- Сделано: `JACKPOT SIM (QA)` больше не занимает отдельную широкую строку — перенесена в правую колонку контролов рядом с PLAY как маленькая кнопка “JP” с низкой opacity (видна на hover).
 - Завершено: UI-фикс — убран белый overlay `animate-ping ... bg-white` из баннера выигрыша (BalatroInferno).
 - Завершено: финальный баннер каскада — показ “CASCADES xN” (кол-во шагов) второй строкой под TOTAL WIN.
 - Завершено: UI-спейсинг — добавлен нижний отступ под панелью MODE, чтобы она не “прилипала” к блоку ANTE.
 - Гейты: `npm run lint`, `npm run test`, `npm run build` — пройдены.
 - Завершено: багфикс — при 1 джокере и комбинации **Pair** выбирается пара со **старшей** картой (добавлен тай-брейк внутри категории при брутфорсе джокера).
 - Гейты (после фикса джокера): `npm run test`, `npm run lint`, `npm run build` — пройдены.
+- Завершено: основная колода обновлена до **52 + 2 джокера = 54** (единый источник истины через `createBaseDeck`).
+- Завершено: **JACKPOT SIM** переведён на использование основной колоды (убран отдельный debug-состав на 57/5 джокеров).
+- Гейты (после обновления колоды): `npm run test`, `npm run lint`, `npm run build` — пройдены.
 
 ## Архив
 - `memory-bank/archive/archive-2025-12-20-cascade-mode.md`
@@ -15,6 +39,12 @@
 - `memory-bank/archive/archive-2025-12-20-cascade-final-banner-steps.md`
 - `memory-bank/archive/archive-2025-12-20-mode-spacing.md`
 - `memory-bank/archive/archive-2025-12-20-joker-pair-highest.md`
+- `memory-bank/archive/archive-2025-12-20-cascade-deck-exhaust-jackpot-cinematic.md`
+- `memory-bank/archive/archive-2025-12-21-deck-54-two-jokers-jackpot-sim.md`
+- `memory-bank/archive/archive-2025-12-21-payouts-rework.md`
+- `memory-bank/archive/archive-2025-12-21-ante-bets.md`
+- `memory-bank/archive/archive-2025-12-21-cascade-multiplier.md`
+- `memory-bank/archive/archive-2025-12-21-jackpot-sim-button.md`
 
 ## Сделано
 - Добавлены Cursor-команды Memory Bank в `/.cursor/commands/`.

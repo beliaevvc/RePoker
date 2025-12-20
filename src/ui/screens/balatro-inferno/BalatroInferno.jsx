@@ -14,6 +14,7 @@ import { TIER_COLORS } from './constants'
 import { useBalatroInfernoController } from './useBalatroInfernoController'
 import { Card } from './components/Card'
 import { ElectricPlasmaOrbs } from './components/ElectricPlasmaOrbs'
+import { CascadeMultiplierIndicator } from './components/CascadeMultiplierIndicator'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 
 function MaxWinPoster() {
@@ -22,7 +23,7 @@ function MaxWinPoster() {
       <div className="text-[clamp(10px,1.4vw,14px)] font-black text-yellow-400 tracking-[clamp(0.16em,0.35vw,0.22em)] transform -skew-x-12 drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">
         MAX WIN
       </div>
-      <div className="text-[clamp(18px,3.2vw,40px)] font-black text-gold-shimmer tracking-tighter transform -skew-x-12 drop-shadow-[2px_2px_0_rgba(0,0,0,1)] mt-[clamp(-4px,-0.6vw,-2px)]">
+      <div className="text-[clamp(22px,3.6vw,48px)] font-black text-gold-shimmer tracking-tighter transform -skew-x-12 drop-shadow-[2px_2px_0_rgba(0,0,0,1)] mt-[clamp(-4px,-0.6vw,-2px)]">
         150,000X
       </div>
     </div>
@@ -68,10 +69,14 @@ export default function BalatroInferno() {
     setMode,
     lastCascadeTotalWin,
     lastCascadeStepsCount,
+    lastWasJackpot,
+    dismissJackpotCinematic,
     cascadeVanishingIndices,
     cascadeAppearingIndices,
     cascadeHighlightIndices,
     cascadeRefillFlash,
+    cascadeWinStepNumber,
+    cascadeMultiplier,
     showWinBanner,
     winBannerAmount,
     debugEnabled,
@@ -87,16 +92,22 @@ export default function BalatroInferno() {
     handleDeal,
     adjustBet,
     forceHand,
+    runJackpotSimulation,
   } = useBalatroInfernoController()
 
   const canChangeMode = gameState === 'idle' || gameState === 'result'
   const isBusy = gameState === 'dealing' || gameState === 'suspense' || gameState === 'cascading'
   const showCascadeTotalBanner = mode === 'cascade' && gameState === 'result' && lastCascadeTotalWin > 0
+  const runMaxWinCinematic = mode === 'cascade' && gameState === 'result' && showCascadeTotalBanner && lastWasJackpot
+  const effectiveShakeClass = runMaxWinCinematic ? '' : shakeClass
+  const cascadeMaxMultiplier = lastCascadeStepsCount >= 4 ? 5 : Math.max(1, lastCascadeStepsCount || 1)
   const showStepWinBanner =
     (gameState === 'result' && mode !== 'cascade' && isWin) ||
     (gameState === 'cascading' && showWinBanner && (result?.multiplier ?? 0) > 0)
   const stepWinAmount = gameState === 'cascading' ? winBannerAmount : result ? bet * result.multiplier : 0
   const cascadeShowDimming = gameState === 'cascading' && showWinBanner && (result?.name ?? '') !== 'High Card'
+
+  const formatMoney = (n) => Number(n || 0).toFixed(2)
 
   const displayHandIsComplete = Array.isArray(hand) && hand.length === 5 && hand.every(Boolean)
   const displayEval = displayHandIsComplete ? getBestHand(hand) : null
@@ -108,15 +119,51 @@ export default function BalatroInferno() {
     displayEval.name !== debugSnapshot.evalResult.name
 
   return (
-    <div className="h-[100svh] bg-[#020617] font-press-start overflow-hidden select-none relative flex flex-col pb-safe">
+    <div
+      className={[
+        'h-[100svh] bg-[#020617] font-press-start overflow-hidden select-none relative flex flex-col pb-safe',
+        runMaxWinCinematic ? 'maxwin-cinematic' : '',
+      ].join(' ')}
+    >
       <div className="absolute inset-[-50%] animate-spin-slow origin-center z-0 pointer-events-none opacity-60">
         <div className="w-full h-full bg-[conic-gradient(from_0deg,#0f172a,#1e1b4b,#312e81,#0f172a)] blur-3xl" />
       </div>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 z-0" />
       <div className="fixed inset-0 z-[100] pointer-events-none crt-overlay" />
 
+      {/* JACKPOT cinematic overlays: вынесены на самый верх (вне shake-контейнера), чтобы MAX WIN был поверх затемнения */}
+      {runMaxWinCinematic && (
+        <>
+          <div className="fixed inset-0 z-[1500] pointer-events-none maxwin-cinematic-noise" />
+          <div className="fixed inset-0 z-[1600] pointer-events-none maxwin-cinematic-blackout" />
+
+          {/* MAX WIN поверх затемнения + dismiss по клику */}
+          <button
+            type="button"
+            onClick={dismissJackpotCinematic}
+            className="fixed inset-0 z-[2200] pointer-events-auto cursor-pointer bg-transparent"
+            aria-label="Dismiss MAX WIN"
+          >
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="maxwin-cinematic-pop">
+                <div className="flex flex-col items-center maxwin-cinematic-pop-inner">
+                  <div className="text-4xl md:text-6xl xl:text-8xl font-black text-gold-shimmer drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] tracking-tighter animate-pulse transform -skew-x-12">
+                    MAX WIN
+                  </div>
+                  <div className="text-5xl md:text-7xl xl:text-9xl text-gold-shimmer font-black mt-4 drop-shadow-[4px_4px_0_#000] tracking-widest">
+                    150,000X
+                  </div>
+                </div>
+              </div>
+            </div>
+          </button>
+        </>
+      )}
+
       <div
-        className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-[clamp(8px,2vh,24px)] ${shakeClass}`}
+        className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-[clamp(8px,2vh,24px)] ${effectiveShakeClass} ${
+          runMaxWinCinematic ? 'maxwin-cinematic-shake' : ''
+        }`}
       >
         {debugEnabled && (
           <div className="fixed right-3 top-3 z-[500] max-w-[min(520px,92vw)] bg-black/70 border border-slate-600 rounded p-3 text-[10px] text-slate-100 font-mono">
@@ -202,19 +249,20 @@ export default function BalatroInferno() {
         </div>
 
         <div
-          className={`absolute top-0 inset-x-0 z-[70] pointer-events-none flex flex-col items-center justify-center pt-8 md:pt-12 transition-all duration-300 ${
+          className={`absolute top-0 inset-x-0 z-[120] pointer-events-none flex flex-col items-center justify-center pt-8 md:pt-12 transition-all duration-300 ${
             tier === 7 ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
           }`}
         >
           <div className="flex flex-col items-center animate-shake-violent">
-            <div className="text-5xl md:text-7xl xl:text-9xl font-black text-gold-shimmer drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] tracking-tighter animate-pulse transform -skew-x-12">
+            <div className="text-4xl md:text-6xl xl:text-8xl font-black text-gold-shimmer drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] tracking-tighter animate-pulse transform -skew-x-12">
               MAX WIN
             </div>
-            <div className="text-3xl md:text-5xl text-white font-bold mt-4 drop-shadow-[4px_4px_0_#000] tracking-widest">
+            <div className="text-5xl md:text-7xl xl:text-9xl text-gold-shimmer font-black mt-4 drop-shadow-[4px_4px_0_#000] tracking-widest">
               150,000X
             </div>
           </div>
         </div>
+
 
         <div className="w-full max-w-5xl px-3 sm:px-4 grid grid-cols-3 items-start gap-2 sm:gap-4 relative">
           <div
@@ -225,7 +273,7 @@ export default function BalatroInferno() {
             <div className="text-[10px] text-blue-300 uppercase tracking-[0.2em] sm:tracking-widest skew-x-[10deg]">
               CHIPS
             </div>
-            <div className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg]">${balance}</div>
+            <div className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg]">${formatMoney(balance)}</div>
           </div>
 
           <div className="relative flex justify-center">
@@ -240,7 +288,7 @@ export default function BalatroInferno() {
             <div className="text-[10px] text-red-300 uppercase tracking-[0.2em] sm:tracking-widest skew-x-[10deg] text-right">
               ANTE
             </div>
-            <div className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] text-right">${bet}</div>
+            <div className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] text-right">${formatMoney(bet)}</div>
           </div>
         </div>
 
@@ -267,11 +315,21 @@ export default function BalatroInferno() {
                   {showCascadeTotalBanner ? 'TOTAL WIN' : result?.name}
                 </div>
                 <div className="text-base sm:text-lg md:text-2xl text-center mt-2 text-white break-words">
-                  +${showCascadeTotalBanner ? lastCascadeTotalWin : stepWinAmount}
+                  +${formatMoney(showCascadeTotalBanner ? lastCascadeTotalWin : stepWinAmount)}
                 </div>
+                {mode === 'cascade' && gameState === 'cascading' && showStepWinBanner && cascadeWinStepNumber > 0 && (
+                  <div className="text-[10px] sm:text-xs text-center mt-2 text-slate-300 uppercase tracking-[0.28em]">
+                    CASCADE MULT x{cascadeMultiplier}
+                  </div>
+                )}
                 {showCascadeTotalBanner && (
                   <div className="text-[10px] sm:text-xs md:text-sm text-center mt-2 text-slate-300 uppercase tracking-[0.28em]">
                     CASCADES x{lastCascadeStepsCount}
+                  </div>
+                )}
+                {showCascadeTotalBanner && (
+                  <div className="text-[10px] sm:text-xs md:text-sm text-center mt-1 text-slate-300 uppercase tracking-[0.28em]">
+                    MAX MULT x{cascadeMaxMultiplier}
                   </div>
                 )}
               </div>
@@ -326,7 +384,19 @@ export default function BalatroInferno() {
               </div>
             </div>
 
-            <ElectricPlasmaOrbs streak={streak} />
+            {mode === 'cascade' ? (
+              gameState === 'cascading' && cascadeWinStepNumber > 0 ? (
+                <CascadeMultiplierIndicator
+                  key={`${cascadeWinStepNumber}-${cascadeMultiplier}`}
+                  multiplier={cascadeMultiplier}
+                  winStepNumber={cascadeWinStepNumber}
+                />
+              ) : (
+                <div className="h-12" />
+              )
+            ) : (
+              <ElectricPlasmaOrbs streak={streak} />
+            )}
           </div>
         </div>
 
@@ -337,7 +407,7 @@ export default function BalatroInferno() {
           {/* Контролы: узкая колонка +/- слева, широкий PLAY по центру, debug справа (не раздувает PLAY) */}
           <div className="grid grid-cols-[clamp(90px,14vw,140px)_minmax(0,1fr)_auto] grid-rows-2 gap-2 sm:gap-3 w-full items-stretch">
             <button
-              onClick={() => adjustBet(10)}
+              onClick={() => adjustBet(1)}
               disabled={gameState !== 'idle' && gameState !== 'result'}
               className="w-full h-[clamp(44px,6vh,56px)] bg-slate-700 hover:bg-slate-600 border-b-4 border-slate-900 rounded text-white active:border-b-0 active:translate-y-1 text-[clamp(18px,5vw,28px)]"
             >
@@ -367,31 +437,43 @@ export default function BalatroInferno() {
                 {gameState === 'suspense' ? '...' : 'PLAY'}
               </span>
             </button>
-            <div className="row-span-2 flex flex-col gap-1 justify-between opacity-10 hover:opacity-100 transition-opacity">
+            <div className="row-span-2 flex flex-col gap-1 justify-between opacity-[0.14] hover:opacity-100 transition-opacity">
+              {mode === 'cascade' && (
+                <button
+                  type="button"
+                  onClick={runJackpotSimulation}
+                  disabled={isBusy}
+                  className={[
+                    'h-8 w-10 rounded',
+                    'bg-slate-900/40 border border-slate-700/80',
+                    'text-[9px] font-mono uppercase tracking-[0.2em] text-slate-200/80',
+                    'hover:bg-slate-800/60 hover:text-slate-100',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/60',
+                    'disabled:opacity-40 disabled:cursor-not-allowed',
+                  ].join(' ')}
+                  title="QA: запускает каскадный сценарий, который гарантированно приводит к джекпоту"
+                  aria-label="JACKPOT SIM (QA)"
+                >
+                  JP
+                </button>
+              )}
               <button
-                onClick={() => forceHand(3)}
-                className="h-8 w-10 bg-rose-900 border border-rose-500 text-[10px] text-white font-mono flex items-center justify-center hover:bg-rose-700"
-                title="3 Jokers"
-              >
-                3J
-              </button>
-              <button
-                onClick={() => forceHand(4)}
+                onClick={() => forceHand(1)}
                 className="h-8 w-10 bg-purple-900 border border-purple-500 text-[10px] text-white font-mono flex items-center justify-center hover:bg-purple-700"
-                title="4 Jokers"
+                title="Force: 1 Joker"
               >
-                4J
+                1J
               </button>
               <button
-                onClick={() => forceHand(5)}
+                onClick={() => forceHand(2)}
                 className="h-8 w-10 bg-yellow-900 border border-yellow-500 text-[10px] text-white font-mono flex items-center justify-center hover:bg-yellow-700"
-                title="5 Jokers"
+                title="Force: 2 Jokers"
               >
-                5J
+                2J
               </button>
             </div>
             <button
-              onClick={() => adjustBet(-10)}
+              onClick={() => adjustBet(-1)}
               disabled={gameState !== 'idle' && gameState !== 'result'}
               className="w-full h-[clamp(44px,6vh,56px)] bg-slate-700 hover:bg-slate-600 border-b-4 border-slate-900 rounded text-white active:border-b-0 active:translate-y-1 text-[clamp(18px,5vw,28px)]"
             >

@@ -8,7 +8,8 @@
  * - Если multiplier === 0 — каскад заканчивается.
  * - Исчезают ТОЛЬКО карты из winningIndices; остальные остаются.
  * - На исчезнувшие позиции добираем карты из deck (dealIndex двигается).
- * - Если deck закончился — вызываем `refillDeck()` и продолжаем.
+ * - Если deck закончился — НЕ пополняем: недостающие карты становятся `null`,
+ *   и каскад заканчивается сразу после этого win-шага.
  * - Выигрыш totalWin = сумма bet * multiplier по всем win-шагам (без множителей каскада).
  */
 
@@ -16,11 +17,14 @@ import type { Card } from '../../../domain/cards/types'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 import type { HandResult } from '../../../domain/hand-evaluator/getBestHand'
 
+export type TableCard = Card | null
+
 export type CascadeStep = {
   handBefore: Card[]
   evalResult: HandResult
   winAmount: number
-  handAfter: Card[]
+  didDeckShortage: boolean
+  handAfter: TableCard[]
   deckAfter: Card[]
   dealIndexAfter: number
 }
@@ -33,14 +37,10 @@ export type BuildCascadeSequenceInput = {
   maxSteps?: number
 }
 
-export type BuildCascadeSequenceDeps = {
-  refillDeck: () => Card[]
-}
-
 export type BuildCascadeSequenceOutput = {
   steps: CascadeStep[]
   totalWin: number
-  finalHand: Card[]
+  finalHand: TableCard[]
   finalDeck: Card[]
   finalDealIndex: number
   finalResult: HandResult
@@ -55,7 +55,6 @@ function assertHandLength5(hand: Card[]) {
 
 export function buildCascadeSequenceUseCase(
   input: BuildCascadeSequenceInput,
-  deps: BuildCascadeSequenceDeps,
 ): BuildCascadeSequenceOutput {
   const { hand, bet, maxSteps = 100 } = input
   assertHandLength5(hand)
@@ -63,21 +62,24 @@ export function buildCascadeSequenceUseCase(
     throw new Error(`maxSteps должен быть > 0, получено: ${maxSteps}`)
   }
 
+  const cleanMoney = (n: number) => Math.round(n * 1e10) / 1e10
+
   let deck = input.deck.slice()
   let dealIndex = input.dealIndex
-  let currentHand = hand.slice()
+  let currentHand: Card[] = hand.slice()
 
   const steps: CascadeStep[] = []
   let totalWin = 0
 
-  const draw = (): Card => {
+  const draw = (ctx: { didDeckShortage: boolean }): Card | null => {
     if (dealIndex >= deck.length) {
-      deck = deps.refillDeck()
-      dealIndex = 0
+      ctx.didDeckShortage = true
+      return null
     }
     const card = deck[dealIndex]
     if (!card) {
-      throw new Error('refillDeck() вернул пустую колоду или dealIndex вышел за границы')
+      ctx.didDeckShortage = true
+      return null
     }
     dealIndex += 1
     return card
@@ -92,31 +94,39 @@ export function buildCascadeSequenceUseCase(
     if (evalResult.multiplier <= 0) break
 
     const handBefore = currentHand.slice()
-    const handAfter = currentHand.slice()
+    const handAfter: TableCard[] = currentHand.slice()
+    const ctx = { didDeckShortage: false }
 
     for (const idx of evalResult.winningIndices) {
-      handAfter[idx] = draw()
+      handAfter[idx] = draw(ctx)
     }
 
-    const winAmount = bet * evalResult.multiplier
-    totalWin += winAmount
+    const winAmount = cleanMoney(bet * evalResult.multiplier)
+    totalWin = cleanMoney(totalWin + winAmount)
 
     steps.push({
       handBefore,
       evalResult,
       winAmount,
+      didDeckShortage: ctx.didDeckShortage,
       handAfter: handAfter.slice(),
       deckAfter: deck.slice(),
       dealIndexAfter: dealIndex,
     })
 
-    currentHand = handAfter
+    // Если deck не хватило — по ТЗ каскад заканчивается сразу после win-шага.
+    if (ctx.didDeckShortage) {
+      currentHand = handAfter.filter(Boolean) as Card[] // безопасно: дальше мы не будем оценивать
+      break
+    }
+
+    currentHand = handAfter as Card[]
   }
 
   return {
     steps,
     totalWin,
-    finalHand: currentHand.slice(),
+    finalHand: steps.length > 0 ? steps[steps.length - 1].handAfter.slice() : currentHand.slice(),
     finalDeck: deck.slice(),
     finalDealIndex: dealIndex,
     finalResult,
