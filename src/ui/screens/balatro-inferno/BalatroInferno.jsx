@@ -120,7 +120,7 @@ export default function BalatroInferno() {
         <div className="relative w-full flex flex-col items-center justify-center flex-1 min-h-0 gap-[clamp(10px,2.5vh,28px)]">
 
           <div
-            className={`fixed left-1/2 -translate-x-1/2 top-[clamp(168px,24vh,300px)] sm:top-28 z-[220] transition-all duration-150 ${
+            className={`fixed left-1/2 -translate-x-1/2 top-[clamp(96px,14vh,180px)] sm:top-28 z-[220] transition-all duration-150 ${
               isWin && tier !== 7 ? 'scale-100 opacity-100 translate-y-0' : 'scale-0 opacity-0 translate-y-10'
             }`}
           >
@@ -145,7 +145,7 @@ export default function BalatroInferno() {
           </div>
 
           <div
-            className={`fixed left-1/2 -translate-x-1/2 top-[clamp(188px,26vh,320px)] sm:top-32 z-[220] transition-all duration-150 ${
+            className={`fixed left-1/2 -translate-x-1/2 top-[clamp(112px,16vh,200px)] sm:top-32 z-[220] transition-all duration-150 ${
               isLose ? 'scale-100 opacity-100 translate-y-0' : 'scale-0 opacity-0 translate-y-10'
             }`}
           >
