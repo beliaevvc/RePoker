@@ -67,6 +67,8 @@ export default function BalatroInferno() {
     streak,
     mode,
     setMode,
+    turboEnabled,
+    toggleTurbo,
     lastCascadeTotalWin,
     lastCascadeStepsCount,
     lastWasJackpot,
@@ -122,6 +124,7 @@ export default function BalatroInferno() {
     <div
       className={[
         'h-[100svh] bg-[#020617] font-press-start overflow-hidden select-none relative flex flex-col pb-safe',
+        turboEnabled ? 'repoker-turbo' : '',
         runMaxWinCinematic ? 'maxwin-cinematic' : '',
       ].join(' ')}
     >
@@ -220,7 +223,25 @@ export default function BalatroInferno() {
             MODE: <span className="text-white">{mode === 'cascade' ? 'CASCADE' : 'NORMAL'}</span>
           </div>
 
-          <div className="inline-flex rounded-lg overflow-hidden border border-slate-700 bg-slate-900/50 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={toggleTurbo}
+              className={[
+                'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors rounded-lg border',
+                turboEnabled
+                  ? 'bg-emerald-200 text-slate-900 border-emerald-300'
+                  : 'text-slate-200 border-slate-700 bg-slate-900/50 hover:bg-slate-800/60',
+                isBusy ? 'opacity-50 cursor-not-allowed' : '',
+              ].join(' ')}
+              aria-pressed={turboEnabled}
+              title={isBusy ? 'Turbo нельзя переключать во время анимаций' : 'Turbo: ускорить каскад/раздачу/анимации выигрыша'}
+            >
+              TURBO
+            </button>
+
+            <div className="inline-flex rounded-lg overflow-hidden border border-slate-700 bg-slate-900/50">
             <button
               type="button"
               disabled={!canChangeMode}
@@ -245,6 +266,7 @@ export default function BalatroInferno() {
             >
               CASCADE
             </button>
+            </div>
           </div>
         </div>
 

@@ -215,7 +215,8 @@ export function Card({ card, index, isVisible, isWinning, isGrayedOut, isVanishi
       className={`relative ${cardClass} transition-all duration-200 ease-out ${grayStyle} ${winningAnim} ${idleAnim} ${vanishAnim} ${appearAnim}`}
       style={{
         '--rot': `${rot}deg`,
-        transitionDelay: isWinning ? '0ms' : `${index * 40}ms`,
+        transitionDuration: 'calc(200ms * var(--repoker-time-factor, 1))',
+        transitionDelay: isWinning ? '0ms' : `calc(${index * 40}ms * var(--repoker-time-factor, 1))`,
         transform:
           isVanishing || isAppearing
             ? undefined

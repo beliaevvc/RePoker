@@ -63,7 +63,9 @@ function writeStoredGameMode(mode) {
  *   cascadeHighlightIndices: number[],
  *   cascadeWinStepNumber: number,
  *   cascadeMultiplier: number,
+ *   turboEnabled: boolean,
  *   setMode: (mode: 'normal'|'cascade') => void,
+ *   toggleTurbo: () => void,
  *   handleDeal: () => void,
  *   adjustBet: (amount: number) => void,
  *   forceHand: (jokerCount: number) => void,
@@ -74,6 +76,7 @@ export function useBalatroInfernoController() {
   const [bet, setBet] = useState(DEFAULT_ANTE)
   const [streak, setStreak] = useState(0)
   const [mode, setMode] = useState(() => readStoredGameMode())
+  const [turboEnabled, setTurboEnabled] = useState(false)
   const [hand, setHand] = useState([])
   const [gameState, setGameState] = useState('idle')
   const [result, setResult] = useState(null)
@@ -125,6 +128,8 @@ export function useBalatroInfernoController() {
     writeStoredGameMode(mode)
   }, [mode])
 
+  const toggleTurbo = useCallback(() => setTurboEnabled((v) => !v), [])
+
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key?.toLowerCase?.() === 'd') setDebugEnabled((v) => !v)
@@ -169,7 +174,7 @@ export function useBalatroInfernoController() {
         const timer = browserClock.setTimeout(() => {
           setHand((prev) => [...prev, deck[dealIndex]])
           setDealIndex((prev) => prev + 1)
-        }, 40)
+        }, turboEnabled ? 20 : 40)
         return () => browserClock.clearTimeout(timer)
       }
       const timer = browserClock.setTimeout(() => setGameState('suspense'), 0)
@@ -204,10 +209,10 @@ export function useBalatroInfernoController() {
         // переводим в каскадный таймлайн
         setCascadeStepIndex(0)
         setGameState('cascading')
-      }, 300)
+      }, turboEnabled ? 150 : 300)
       return () => browserClock.clearTimeout(timer)
     }
-  }, [gameState, dealIndex, deck, hand, bet, balance, streak, mode, resetCascade])
+  }, [gameState, dealIndex, deck, hand, bet, balance, streak, mode, resetCascade, turboEnabled])
 
   useEffect(() => {
     if (gameState !== 'cascading') return
@@ -217,11 +222,13 @@ export function useBalatroInfernoController() {
     if (!logicalHand) return
 
     const timers = []
+    const timeFactor = turboEnabled ? 0.5 : 1
+    const scaleMs = (ms) => (ms <= 0 ? 0 : Math.max(0, Math.round(ms * timeFactor)))
     const schedule = (fn, ms) => {
       const t = browserClock.setTimeout(() => {
         if (cascadeAnimTokenRef.current !== token) return
         fn()
-      }, ms)
+      }, scaleMs(ms))
       timers.push(t)
       return t
     }
@@ -420,6 +427,7 @@ export function useBalatroInfernoController() {
     gameState,
     cascadeStepIndex,
     clearCascadeActive,
+    turboEnabled,
   ])
 
   const handleDeal = () => {
@@ -506,6 +514,7 @@ export function useBalatroInfernoController() {
     bet,
     streak,
     mode,
+    turboEnabled,
     hand,
     deck,
     dealIndex,
@@ -535,6 +544,7 @@ export function useBalatroInfernoController() {
     debugSnapshot,
     debugLastWinSnapshot,
     setMode,
+    toggleTurbo,
     handleDeal,
     adjustBet,
     forceHand,

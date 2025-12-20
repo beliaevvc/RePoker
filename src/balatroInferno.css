@@ -26,6 +26,12 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Turbo: ускоряем только “темповые” анимации через CSS-переменную.
+   Важно: не трогаем shake/jitter/orbs/ореолы — они остаются декоративными. */
+.repoker-turbo {
+  --repoker-time-factor: 0.5;
+}
+
 @keyframes spin-slow {
   from {
     transform: rotate(0deg);
@@ -112,7 +118,7 @@
   }
 }
 .animate-cascade-vanish {
-  animation: cascade-vanish 0.26s ease-in forwards;
+  animation: cascade-vanish calc(0.26s * var(--repoker-time-factor, 1)) ease-in forwards;
 }
 
 /* CASCADE: появление новых карт (заметный “drop-in”) */
@@ -134,7 +140,7 @@
   }
 }
 .animate-cascade-appear {
-  animation: cascade-appear 0.28s cubic-bezier(0.2, 1.1, 0.2, 1) both;
+  animation: cascade-appear calc(0.28s * var(--repoker-time-factor, 1)) cubic-bezier(0.2, 1.1, 0.2, 1) both;
 }
 
 /* CASCADE: короткий “флэш” на весь ряд карт после refill (делает появление заметным) */
@@ -150,7 +156,7 @@
   }
 }
 .animate-cascade-refill-flash {
-  animation: cascade-refill-flash 0.22s ease-out both;
+  animation: cascade-refill-flash calc(0.22s * var(--repoker-time-factor, 1)) ease-out both;
 }
 
 @keyframes shake-mid {
@@ -275,7 +281,7 @@
   }
 }
 .animate-cascade-mult-pop {
-  animation: cascade-mult-pop 0.22s cubic-bezier(0.2, 1.1, 0.2, 1) both;
+  animation: cascade-mult-pop calc(0.22s * var(--repoker-time-factor, 1)) cubic-bezier(0.2, 1.1, 0.2, 1) both;
 }
 
 .cascade-mult-glow {

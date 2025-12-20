@@ -1,6 +1,13 @@
 # Прогресс
 
 ## Статус
+- В работе: Turbo-кнопка (ускорение темповых анимаций/таймингов без ускорения декоративных shake/ореолов).
+- Сделано (Turbo): добавлен `turboEnabled` в `useBalatroInfernoController`, ускорены JS-тайминги раздачи/suspense/каскада через масштабирование задержек.
+- Сделано (Turbo UI): добавлена кнопка `TURBO` в верхней панели `BalatroInferno`, toggle ON/OFF, disabled во время `isBusy`, без сохранения в `localStorage`.
+- Сделано (Turbo CSS): добавлен класс `.repoker-turbo` с `--repoker-time-factor: 0.5`; ускорены `animate-cascade-vanish/appear/refill-flash` и `animate-cascade-mult-pop`; ускорены `transitionDelay/Duration` карт через CSS‑переменную.
+- QA: `npm run test` — ✅ (24/24). `npm run lint` — ✅. `npm run build` — ✅.
+- Примечание: test/lint в sandbox падали с `EPERM` (чтение/kill воркеров), поэтому прогон делался вне sandbox.
+- Дальше: `/reflect`.
 - Сделано: UI — `JACKPOT SIM (QA)` перенесена вправо от кнопки PLAY и сделана еле заметной.
 - Гейты: `npm run lint`, `npm run build` — пройдены.
 - В работе: множитель каскада (1×→2×→3×→5×) + UI-индикатор, замена streak в CASCADE.
@@ -45,6 +52,7 @@
 - `memory-bank/archive/archive-2025-12-21-ante-bets.md`
 - `memory-bank/archive/archive-2025-12-21-cascade-multiplier.md`
 - `memory-bank/archive/archive-2025-12-21-jackpot-sim-button.md`
+- `memory-bank/archive/archive-2025-12-21-turbo-button.md`
 
 ## Сделано
 - Добавлены Cursor-команды Memory Bank в `/.cursor/commands/`.
