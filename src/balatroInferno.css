@@ -193,6 +193,23 @@
   animation: shake-violent 0.1s linear infinite;
 }
 
+@keyframes shake-ultra {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(-8px, -8px) rotate(-3deg); }
+  20% { transform: translate(8px, 8px) rotate(3deg); }
+  30% { transform: translate(-8px, 8px) rotate(-3deg); }
+  40% { transform: translate(8px, -8px) rotate(3deg); }
+  50% { transform: translate(-8px, 0) rotate(-3deg); }
+  60% { transform: translate(8px, 0) rotate(3deg); }
+  70% { transform: translate(0, 8px) rotate(-3deg); }
+  80% { transform: translate(0, -8px) rotate(3deg); }
+  90% { transform: translate(-4px, 4px) rotate(0deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+.animate-shake-ultra {
+  animation: shake-ultra 0.2s cubic-bezier(.36,.07,.19,.97) both;
+}
+
 @keyframes electric-dash {
   to {
     stroke-dashoffset: -1000;
@@ -250,6 +267,46 @@
 }
 .animate-shine {
   animation: shine 0.5s linear;
+}
+
+/* GOLD SHIMMER TEXT (MAX WIN) */
+@keyframes gold-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.text-gold-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    #5a4300 0%,
+    #f6c453 12%,
+    #fff3b0 25%,
+    #ffcf33 38%,
+    #b8860b 50%,
+    #ffcf33 62%,
+    #fff3b0 75%,
+    #f6c453 88%,
+    #5a4300 100%
+  );
+  background-size: 220% 100%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: gold-shimmer 2.2s linear infinite;
+  text-shadow: 0 0 14px rgba(255, 215, 0, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-gold-shimmer {
+    animation: none;
+    background-position: 50% 50%;
+  }
 }
 
 @keyframes bounce-subtle {
@@ -367,342 +424,81 @@
     opacity: 0.7;
   }
   50% {
-    opacity: 0.9;
+    opacity: 1;
   }
-  70% {
-    opacity: 0.6;
+  60% {
+    opacity: 0.4;
+  }
+  80% {
+    opacity: 0.9;
   }
   100% {
     opacity: 1;
   }
 }
 .animate-flicker-text {
-  animation: flicker-text 0.2s steps(4) infinite;
+  animation: flicker-text 2s steps(4) infinite;
 }
 
 @keyframes logo-glitch {
-  0% {
-    opacity: 1;
-    transform: translate(0);
-  }
-  95% {
-    opacity: 1;
-    transform: translate(0);
-  }
-  96% {
-    opacity: 0.8;
-    transform: translate(-2px, 2px);
-  }
-  97% {
-    opacity: 0.1;
-    transform: translate(2px, -2px);
-  }
-  98% {
-    opacity: 1;
-    transform: translate(0);
-  }
-  99% {
-    opacity: 0.5;
-    transform: translate(-2px, 0);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(0);
-  }
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
 }
 .animate-logo-glitch {
-  animation: logo-glitch 4s infinite;
+  animation: logo-glitch 2s infinite steps(2);
 }
 
 @keyframes glitch-text-1 {
-  0% {
-    clip-path: inset(40% 0 61% 0);
-    opacity: 0;
-  }
-  20% {
-    clip-path: inset(92% 0 1% 0);
-    opacity: 0.5;
-  }
-  40% {
-    clip-path: inset(43% 0 1% 0);
-    opacity: 0;
-  }
-  60% {
-    clip-path: inset(25% 0 58% 0);
-    opacity: 0.7;
-  }
-  80% {
-    clip-path: inset(54% 0 7% 0);
-    opacity: 0;
-  }
-  100% {
-    clip-path: inset(58% 0 43% 0);
-    opacity: 0.5;
-  }
+  0% { clip-path: inset(40% 0 61% 0); opacity: 0; }
+  20% { clip-path: inset(92% 0 1% 0); opacity: 1; transform: translate(-2px, 0); }
+  40% { clip-path: inset(43% 0 1% 0); opacity: 0; }
+  60% { clip-path: inset(25% 0 58% 0); opacity: 1; transform: translate(2px, 0); }
+  80% { clip-path: inset(54% 0 7% 0); opacity: 0; }
+  100% { clip-path: inset(58% 0 43% 0); opacity: 1; }
 }
 .animate-glitch-text-1 {
-  animation: glitch-text-1 2s infinite linear alternate-reverse;
+  animation: glitch-text-1 2.5s infinite linear alternate-reverse;
 }
 
 @keyframes glitch-text-2 {
-  0% {
-    clip-path: inset(12% 0 55% 0);
-    opacity: 0.5;
-  }
-  20% {
-    clip-path: inset(1% 0 25% 0);
-    opacity: 0;
-  }
-  40% {
-    clip-path: inset(22% 0 9% 0);
-    opacity: 0.6;
-  }
-  60% {
-    clip-path: inset(80% 0 5% 0);
-    opacity: 0;
-  }
-  80% {
-    clip-path: inset(30% 0 15% 0);
-    opacity: 0.4;
-  }
-  100% {
-    clip-path: inset(10% 0 80% 0);
-    opacity: 0;
-  }
+  0% { clip-path: inset(24% 0 29% 0); opacity: 0; }
+  20% { clip-path: inset(54% 0 21% 0); opacity: 1; transform: translate(2px, 0); }
+  40% { clip-path: inset(3% 0 5% 0); opacity: 0; }
+  60% { clip-path: inset(67% 0 12% 0); opacity: 1; transform: translate(-2px, 0); }
+  80% { clip-path: inset(18% 0 76% 0); opacity: 0; }
+  100% { clip-path: inset(4% 0 34% 0); opacity: 1; }
 }
 .animate-glitch-text-2 {
-  animation: glitch-text-2 2s infinite linear alternate-reverse;
-}
-@keyframes spin-electric-1 {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-.animate-spin-electric-1 {
-  animation: spin-electric-1 1s linear infinite;
+  animation: glitch-text-2 2.5s infinite linear alternate-reverse;
 }
 
-@keyframes spin-electric-2 {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(-360deg);
-  }
-}
-.animate-spin-electric-2 {
-  animation: spin-electric-2 2s linear infinite;
-}
-
-@keyframes spin-electric-3 {
-  0% {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.1);
-  }
-  100% {
-    transform: rotate(360deg) scale(1);
-  }
-}
-.animate-spin-electric-3 {
-  animation: spin-electric-3 4s linear infinite;
-}
-
-
-/* --- NEW STYLES FOR MAX WIN --- */
-@keyframes gold-shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.text-gold-shimmer {
-  background: linear-gradient(
-    90deg,
-    #ffd700 0%,
-    #fbf5b7 25%,
-    #ffb700 45%,
-    #fff 50%,
-    #ffb700 55%,
-    #fbf5b7 75%,
-    #ffd700 100%
-  );
-  background-size: 200% auto;
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: gold-shimmer 3s linear infinite;
-  /* Fallback for shadow on text with background-clip: drop-shadow filter on parent is better, 
-     but this can work if text is solid in some browsers. We use filter in JSX. */
-}
-
-/* --- INSANE SHAKE FOR MAX WIN --- */
-@keyframes shake-insane {
-  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-  10% { transform: translate(-10px, -10px) rotate(-5deg) scale(1.1); }
-  20% { transform: translate(10px, 10px) rotate(5deg) scale(0.9); }
-  30% { transform: translate(-15px, 5px) rotate(-8deg) scale(1.15); }
-  40% { transform: translate(15px, -5px) rotate(8deg) scale(0.85); }
-  50% { transform: translate(-5px, 15px) rotate(-3deg) scale(1.2); }
-  60% { transform: translate(5px, -15px) rotate(3deg) scale(1); }
-  70% { transform: translate(-12px, 8px) rotate(-6deg) scale(1.1); }
-  80% { transform: translate(12px, -8px) rotate(6deg) scale(0.9); }
-  90% { transform: translate(-8px, -12px) rotate(-4deg) scale(1.05); }
-  100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-}
-
-.animate-shake-insane {
-  animation: shake-insane 0.4s linear infinite;
-}
-
-/* --- JACKPOT CINEMATIC (MAX WIN reveal after TOTAL WIN) --- */
-/* Активируется классом `.maxwin-cinematic` на корневом контейнере. */
-
-@keyframes maxwin-jitter-ramp {
-  0% {
-    transform: translate(0, 0);
-    filter: none;
-  }
-  15% {
-    transform: translate(-1px, 1px);
-    filter: contrast(1.05) saturate(1.05);
-  }
-  30% {
-    transform: translate(2px, -2px);
-    filter: contrast(1.12) saturate(1.12);
-  }
-  45% {
-    transform: translate(-3px, 3px);
-    filter: contrast(1.18) saturate(1.18);
-  }
-  60% {
-    transform: translate(5px, -4px);
-    filter: contrast(1.28) saturate(1.2) blur(0.3px);
-  }
-  75% {
-    transform: translate(-7px, 6px);
-    filter: contrast(1.35) saturate(1.25) blur(0.6px);
-  }
-  90% {
-    transform: translate(9px, -8px);
-    filter: contrast(1.45) saturate(1.3) blur(0.9px);
-  }
-  100% {
-    transform: translate(-12px, 10px);
-    filter: contrast(1.55) saturate(1.35) blur(1.1px);
-  }
+/* Max Win Cinematic */
+.maxwin-cinematic {
+  /* No changes to container for now */
 }
 
 .maxwin-cinematic-shake {
-  /* 1.2s пауза после финального баннера → затем “нарастание” тряски */
-  animation: maxwin-jitter-ramp 0.9s steps(1, end) 1.25s both;
-}
-
-@keyframes maxwin-noise-flicker {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0);
-  }
-  20% {
-    opacity: 0.35;
-    transform: translate(-2px, 1px);
-  }
-  40% {
-    opacity: 0.55;
-    transform: translate(2px, -1px);
-  }
-  60% {
-    opacity: 0.45;
-    transform: translate(-3px, 2px);
-  }
-  80% {
-    opacity: 0.65;
-    transform: translate(3px, -2px);
-  }
-  100% {
-    opacity: 0.8;
-    transform: translate(0, 0);
-  }
+  animation: shake-violent 0.15s infinite;
 }
 
 .maxwin-cinematic-noise {
-  opacity: 0;
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.03),
-      rgba(255, 255, 255, 0.03) 1px,
-      rgba(0, 0, 0, 0.03) 2px,
-      rgba(0, 0, 0, 0.03) 3px
-    ),
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08), transparent 55%);
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity: 0.15;
   mix-blend-mode: overlay;
-  animation: maxwin-noise-flicker 0.55s steps(1, end) 1.15s both;
-}
-
-@keyframes maxwin-blackout {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 0.92;
-  }
+  animation: fire-wave 0.2s steps(4) infinite;
 }
 
 .maxwin-cinematic-blackout {
-  opacity: 0;
-  background: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.98));
-  animation: maxwin-blackout 0.28s ease-out 2.05s both;
-}
-
-@keyframes maxwin-reveal {
-  0% {
-    opacity: 0;
-    transform: scale(0.02);
-    filter: blur(3px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0px);
-  }
+  background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.95) 100%);
 }
 
 .maxwin-cinematic-pop {
-  opacity: 0;
-  transform-origin: 50% 50%;
-  animation: maxwin-reveal 0.42s cubic-bezier(0.15, 1.35, 0.2, 1) 2.18s both;
-}
-
-@keyframes maxwin-pop-shake {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  25% {
-    transform: translate(-3px, 3px);
-  }
-  50% {
-    transform: translate(3px, -3px);
-  }
-  75% {
-    transform: translate(-3px, 3px);
-  }
+  animation: cascade-mult-pop 0.6s cubic-bezier(0.2, 1.5, 0.2, 1) both;
 }
 
 .maxwin-cinematic-pop-inner {
-  animation: maxwin-pop-shake 0.09s linear infinite 2.65s;
+  animation: shake-mid 3s infinite linear;
 }
-
-
-

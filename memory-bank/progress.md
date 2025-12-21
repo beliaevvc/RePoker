@@ -1,6 +1,12 @@
 # Прогресс
 
 ## Статус
+- В работе: UI — “MAX WIN 150.000x” в шапке перестал быть золотым с переливом.
+- Найдено: в `BalatroInferno.jsx` используется класс `text-gold-shimmer`, но его определения в CSS не было, поэтому стиль не применялся.
+- Сделано: добавлен `.text-gold-shimmer` + анимация перелива `@keyframes gold-shimmer` в `src/balatroInferno.css` (с `prefers-reduced-motion` fallback).
+- Гейты: `npm run build` — ✅.
+- Архив: `memory-bank/archive/archive-2025-12-21-maxwin-gold-shimmer.md`
+- Дальше: `/van`.
 - В работе: UI — плашка CHIPS переполнялась на больших суммах (текст “вылазал” за карточку), перенос строки запрещён.
 - Сделано: добавлен общий helper форматирования денег (full/compact/adaptive) и подключён в `BalatroInferno` + `DevToolsDrawer`.
 - Сделано: CHIPS теперь показывает **adaptive** значение (full пока помещается, иначе compact), а полное значение доступно через `title` (tooltip).
@@ -82,6 +88,8 @@
 - `memory-bank/archive/archive-2025-12-21-controls-block-height.md`
 - `memory-bank/archive/archive-2025-12-21-maxwin-poster-desktop.md`
 - `memory-bank/archive/archive-2025-12-21-chips-plaque-overflow.md`
+- `memory-bank/archive/archive-2025-12-21-autoplay.md`
+- `memory-bank/archive/archive-2025-12-21-maxwin-gold-shimmer.md`
 
 ## Сделано
 - Добавлены Cursor-команды Memory Bank в `/.cursor/commands/`.
@@ -127,6 +135,19 @@
 
 ## Дальше
 - Дальше: `/van` для следующей задачи.
+- В работе: AUTO play — окно выбора автоспинов (10/25/50/100/500/1000/∞) + запуск/стоп + счётчик на PLAY.
+- Сделано: добавлено состояние автоигры и effect‑оркестратор в `useBalatroInfernoController` (последовательные спины, стоп при `CHIPS < ANTE` или невозможности старта).
+- Сделано: добавлена модалка `AutoPlayModal` (desktop center / mobile bottom-sheet), пресеты + большая кнопка ∞, `START → STOP`.
+- Сделано: подключено в `BalatroInferno.jsx`: кнопка `AUTO` открывает модалку, на `PLAY` — badge со счётчиком/∞; при запущенном AUTO клик по `PLAY` останавливает AUTO (защита от гонок).
+- Гейты (вне sandbox из-за EPERM на чтении `node_modules` в sandbox): `npm run lint` — ✅, `npm run test` — ✅ (24/24), `npm run build` — ✅.
+- Правки по фидбэку:
+  - модалка AUTO сделана “ровной” (убран наклон/косая подача);
+  - **убраны бесконечные автоспины** (∞ удалено из UI и логики);
+  - убран текст “АВТО ЗАВЕРШЕНО” из модалки;
+  - убран пиксельный значок на кнопке AUTO;
+  - остановка авто: **только через кнопку AUTO**, она меняет текст на **STOP**.
+- Гейты после правок: `npm run lint` — ✅, `npm run test` — ✅ (24/24), `npm run build` — ✅.
+- Дальше: `/reflect`.
 - В работе: Dev Mode — добавить в `DevToolsDrawer` раздел “Добавить денег” с кнопками пополнения баланса.
 - Сделано: в `useBalatroInfernoController` добавлен dev-only action `addMoney(amount)` (guard `devToolsAllowed`, нормализация суммы, лог `BALANCE_ADD`).
 - Сделано: `BalatroInferno.jsx` пробрасывает `onAddMoney` в `DevToolsDrawer`.

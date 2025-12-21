@@ -17,7 +17,7 @@ import { Card } from './components/Card'
 import { ElectricPlasmaOrbs } from './components/ElectricPlasmaOrbs'
 import { CascadeMultiplierIndicator } from './components/CascadeMultiplierIndicator'
 import { DevToolsDrawer } from './components/DevToolsDrawer'
-import { PixelAutoIcon, PixelLightningIcon } from './components/PixelIcons'
+import { AutoPlayModal } from './components/AutoPlayModal'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 import { formatMoneyAdaptive, formatMoneyFull } from './moneyFormat'
 
@@ -105,6 +105,7 @@ export default function BalatroInferno() {
     deckRemaining,
     dealIndex,
     gameState,
+    isBusy,
     result,
     tier,
     isWin,
@@ -114,10 +115,19 @@ export default function BalatroInferno() {
     handleDeal,
     adjustBet,
     runJackpotSimulation,
+
+    // AutoPlay (AUTO)
+    autoModalOpen,
+    setAutoModalOpen,
+    autoSelectedCount,
+    selectAutoPreset,
+    autoRunning,
+    autoRemaining,
+    startAuto,
+    stopAuto,
   } = useBalatroInfernoController()
 
   const canChangeMode = gameState === 'idle' || gameState === 'result'
-  const isBusy = gameState === 'dealing' || gameState === 'suspense' || gameState === 'cascading'
   const showCascadeTotalBanner = mode === 'cascade' && gameState === 'result' && lastCascadeTotalWin > 0
   const runMaxWinCinematic = mode === 'cascade' && gameState === 'result' && showCascadeTotalBanner && lastWasJackpot
   const effectiveShakeClass = runMaxWinCinematic ? '' : shakeClass
@@ -131,6 +141,7 @@ export default function BalatroInferno() {
   const chipsDisplay = formatMoneyAdaptive(balance)
   const chipsTitle = formatMoneyFull(balance)
   const betDisplay = formatMoneyFull(bet)
+  const canStartAuto = balance >= bet
 
   const displayHandIsComplete = Array.isArray(hand) && hand.length === 5 && hand.every(Boolean)
   const displayEval = displayHandIsComplete ? getBestHand(hand) : null
@@ -237,6 +248,20 @@ export default function BalatroInferno() {
           </button>
         </>
       )}
+
+      <AutoPlayModal
+        open={autoModalOpen}
+        running={autoRunning}
+        isBusy={isBusy}
+        canStart={canStartAuto}
+        selectedCount={autoSelectedCount}
+        onSelectPreset={selectAutoPreset}
+        onStart={() => {
+          startAuto()
+          setAutoModalOpen(false)
+        }}
+        onClose={() => setAutoModalOpen(false)}
+      />
 
       <div
         className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-[clamp(8px,2vh,24px)] ${effectiveShakeClass} ${
@@ -539,6 +564,7 @@ export default function BalatroInferno() {
                 'disabled:filter disabled:grayscale disabled:cursor-not-allowed',
                 'transition-all flex items-center justify-center gap-2 sm:gap-4',
               ].join(' ')}
+              title="PLAY"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shine" />
 
@@ -550,6 +576,19 @@ export default function BalatroInferno() {
               <span className="text-xl sm:text-2xl md:text-4xl text-white tracking-[0.2em] sm:tracking-widest drop-shadow-md font-black">
                 {gameState === 'suspense' ? '...' : 'PLAY'}
               </span>
+
+              {autoRunning && (
+                <div
+                  className={[
+                    'absolute top-2 right-2 px-2 py-1 rounded-full',
+                    'bg-white/10 backdrop-blur-sm border border-white/20',
+                    'text-[10px] sm:text-xs text-white/90 font-press-start tracking-normal',
+                  ].join(' ')}
+                  title={`AUTO: осталось ${autoRemaining}`}
+                >
+                  AUTO {Math.max(0, autoRemaining)}
+                </div>
+              )}
             </button>
             <button
               onClick={() => adjustBet(1)}
@@ -561,15 +600,24 @@ export default function BalatroInferno() {
             </button>
             <button
               type="button"
-              disabled={true}
+              disabled={false}
               className={[
-                'w-full h-full bg-slate-700 border-b-[6px] border-slate-900 rounded-lg col-start-1 row-start-2',
-                'opacity-50 cursor-not-allowed',
+                'w-full h-full border-b-[6px] border-slate-900 rounded-lg col-start-1 row-start-2',
+                'active:border-b-0 active:translate-y-[6px] transition-all',
                 'flex items-center justify-center',
+                autoRunning
+                  ? 'bg-slate-600 hover:bg-slate-500'
+                  : 'bg-slate-700 hover:bg-slate-600',
               ].join(' ')}
-              title="AUTO (скоро): автоигра"
+              title={autoRunning ? 'STOP: остановить автоигру' : 'AUTO: автоигра'}
+              onClick={() => {
+                if (autoRunning) stopAuto('user')
+                else setAutoModalOpen(true)
+              }}
             >
-              <span className="text-[10px] sm:text-xs text-slate-400 tracking-wider">AUTO</span>
+              <span className={['text-[10px] sm:text-xs tracking-[0.22em] font-black', autoRunning ? 'text-red-200' : 'text-slate-200'].join(' ')}>
+                {autoRunning ? 'STOP' : 'AUTO'}
+              </span>
             </button>
             <button
               onClick={() => adjustBet(-1)}

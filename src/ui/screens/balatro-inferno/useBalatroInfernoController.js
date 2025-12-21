@@ -155,6 +155,14 @@ export function useBalatroInfernoController() {
   const [deck, setDeck] = useState(() => createDeck(nativeRng))
   const [dealIndex, setDealIndex] = useState(0)
 
+  // AutoPlay (AUTO)
+  const [autoModalOpen, setAutoModalOpen] = useState(false)
+  const [autoSelectedCount, setAutoSelectedCount] = useState(25)
+  const [autoRunning, setAutoRunning] = useState(false)
+  const [autoRemaining, setAutoRemaining] = useState(0)
+  const [autoSpinInProgress, setAutoSpinInProgress] = useState(false)
+  const [autoLastStopReason, setAutoLastStopReason] = useState(null)
+
   const [cascadeStepIndex, setCascadeStepIndex] = useState(0)
   const [cascadeRunningTotalWin, setCascadeRunningTotalWin] = useState(0)
   const [cascadeWinStepNumber, setCascadeWinStepNumber] = useState(0)
@@ -333,6 +341,114 @@ export function useBalatroInfernoController() {
   }, [clearCascadeActive])
 
   const deckRemaining = useMemo(() => Math.max(0, (deck?.length ?? 0) - (dealIndex ?? 0)), [deck, dealIndex])
+
+  const isBusy = useMemo(
+    () => gameState === 'dealing' || gameState === 'suspense' || gameState === 'cascading',
+    [gameState],
+  )
+  const isReadyForNextDeal = useMemo(() => gameState === 'idle' || gameState === 'result', [gameState])
+
+  const stopAuto = useCallback(
+    (reason = null) => {
+      setAutoRunning(false)
+      setAutoSpinInProgress(false)
+      setAutoRemaining(0)
+      setAutoLastStopReason(reason)
+      pushDevLog('AUTO_STOP', { reason })
+    },
+    [pushDevLog],
+  )
+
+  const selectAutoPreset = useCallback((preset) => {
+    const n = Number(preset)
+    if (!Number.isFinite(n) || n <= 0) return
+    setAutoSelectedCount(n)
+  }, [])
+
+  const startAuto = useCallback(() => {
+    // По спецификации: если busy или не хватает денег — авто не стартует (и считается остановленным).
+    if (isBusy) return stopAuto('busy')
+    if (balance < bet) return stopAuto('no-money')
+
+    setAutoLastStopReason(null)
+    setAutoRunning(true)
+    setAutoSpinInProgress(false)
+    setAutoRemaining(autoSelectedCount)
+    pushDevLog('AUTO_START', {
+      count: autoSelectedCount,
+      bet,
+      balanceBefore: balance,
+    })
+  }, [isBusy, balance, bet, autoSelectedCount, stopAuto, pushDevLog])
+
+  const startDealNow = useCallback(
+    (via = 'manual') => {
+      const next = startDealUseCase({ balance, bet }, { rng: nativeRng })
+      if (!next) return false
+      pushDevLog('DEAL_START', { via, mode, bet, balanceBefore: balance })
+      resetCascade()
+      setBalance(next.balance)
+      setHand(next.hand)
+      setResult(next.result)
+      setDealIndex(next.dealIndex)
+      setDeck(next.deck)
+      setGameState(next.gameState)
+      pushDevLog('DEAL_STARTED', {
+        via,
+        gameState: next.gameState,
+        dealIndex: next.dealIndex,
+        deckLen: next.deck?.length ?? null,
+      })
+      return true
+    },
+    [balance, bet, mode, resetCascade, pushDevLog],
+  )
+
+  // AutoPlay: оркестрация “следующий спин после завершения предыдущего”.
+  /* eslint-disable react-hooks/set-state-in-effect -- AutoPlay orchestrator is intentionally effect-driven. */
+  useEffect(() => {
+    if (!autoRunning) return
+
+    // Finite: закончились спины
+    if (autoRemaining <= 0) {
+      stopAuto('done')
+      return
+    }
+
+    // Ждём “готового” состояния
+    if (!isReadyForNextDeal) return
+
+    // На готовом экране проверяем деньги — иначе стоп (по требованию)
+    if (balance < bet) {
+      stopAuto('no-money')
+      return
+    }
+
+    // Если предыдущий спин был запущен авто — на готовом экране коммитим “минус 1”.
+    if (autoSpinInProgress) {
+      setAutoRemaining((prev) => Math.max(0, prev - 1))
+      setAutoSpinInProgress(false)
+      return
+    }
+
+    // Стартуем следующий спин
+    const ok = startDealNow('auto')
+    if (!ok) {
+      stopAuto('cannot-start')
+      return
+    }
+    setAutoSpinInProgress(true)
+  }, [
+    autoRunning,
+    autoRemaining,
+    autoSpinInProgress,
+    isReadyForNextDeal,
+    balance,
+    bet,
+    startDealNow,
+    stopAuto,
+  ])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (gameState === 'dealing') {
@@ -639,21 +755,7 @@ export function useBalatroInfernoController() {
   ])
 
   const handleDeal = () => {
-    const next = startDealUseCase({ balance, bet }, { rng: nativeRng })
-    if (!next) return
-    pushDevLog('DEAL_START', { mode, bet, balanceBefore: balance })
-    resetCascade()
-    setBalance(next.balance)
-    setHand(next.hand)
-    setResult(next.result)
-    setDealIndex(next.dealIndex)
-    setDeck(next.deck)
-    setGameState(next.gameState)
-    pushDevLog('DEAL_STARTED', {
-      gameState: next.gameState,
-      dealIndex: next.dealIndex,
-      deckLen: next.deck?.length ?? null,
-    })
+    startDealNow('manual')
   }
 
   const runJackpotSimulation = () => {
@@ -724,6 +826,7 @@ export function useBalatroInfernoController() {
     deckRemaining,
     dealIndex,
     gameState,
+    isBusy,
     result,
     tier,
     isWin,
@@ -765,6 +868,17 @@ export function useBalatroInfernoController() {
     dismissJackpotCinematic,
     setDevToolsOpen,
     enableDevToolsExplicit,
+
+    // AutoPlay (AUTO)
+    autoModalOpen,
+    setAutoModalOpen,
+    autoSelectedCount,
+    selectAutoPreset,
+    autoRunning,
+    autoRemaining,
+    autoLastStopReason,
+    startAuto,
+    stopAuto,
   }
 }
 
