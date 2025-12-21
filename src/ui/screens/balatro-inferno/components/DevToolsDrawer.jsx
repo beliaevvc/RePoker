@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { formatMoneyFull } from '../moneyFormat'
 
 function formatTs(ts) {
   try {
@@ -7,12 +8,6 @@ function formatTs(ts) {
   } catch {
     return String(ts)
   }
-}
-
-function formatMoney(n) {
-  const v = Number(n || 0)
-  if (Number.isNaN(v)) return String(n)
-  return `$${v.toFixed(2)}`
 }
 
 function formatMode(mode) {
@@ -42,29 +37,35 @@ function formatLogMessage(entry) {
 
   switch (type) {
     case 'DEAL_START':
-      return `PLAY: ставка ${formatMoney(p.bet)}`
+      return `PLAY: ставка ${formatMoneyFull(p.bet)}`
     case 'DEAL_STARTED':
       return `Раздача началась (deck=${p.deckLen ?? '?'}, idx=${p.dealIndex ?? '?'})`
     case 'BET_CHANGE':
-      return `Ставка: ${formatMoney(p.from)} → ${formatMoney(p.to)}`
+      return `Ставка: ${formatMoneyFull(p.from)} → ${formatMoneyFull(p.to)}`
     case 'MODE_CHANGE':
       return `Режим: ${formatMode(p.from)} → ${formatMode(p.to)}`
     case 'TURBO_TOGGLE':
       return `Turbo: ${p.enabled ? 'ON' : 'OFF'}`
     case 'DEBUG_TOGGLE':
       return `Debug overlay: ${p.enabled ? 'ON' : p.enabled === false ? 'OFF' : 'toggle'}`
+    case 'BALANCE_ADD': {
+      const amt = Number(p.amount ?? 0)
+      return `Баланс: +${formatMoneyFull(amt)}`
+    }
     case 'JACKPOT_SIM_START':
-      return `JP SIM: запуск (ставка ${formatMoney(p.bet)})`
+      return `JP SIM: запуск (ставка ${formatMoneyFull(p.bet)})`
     case 'JACKPOT_SIM_SCENARIO':
       return `JP SIM: сценарий #${(p.scenarioIdx ?? 0) + 1}`
     case 'RESULT_RESOLVED': {
       const name = p.name ?? '—'
       const winAmount = Number(p.winAmount ?? 0)
       const combo = p.combo ? ` ${p.combo}` : ''
-      return winAmount > 0 ? `Результат: ${name}${combo} +${formatMoney(winAmount)}` : `Результат: ${name}${combo}`
+      return winAmount > 0
+        ? `Результат: ${name}${combo} +${formatMoneyFull(winAmount)}`
+        : `Результат: ${name}${combo}`
     }
     case 'CASCADE_START':
-      return `Каскад: старт (ставка ${formatMoney(p.bet)})`
+      return `Каскад: старт (ставка ${formatMoneyFull(p.bet)})`
     case 'CASCADE_STEP': {
       const stepNum = (p.winStepNumber ?? 0) || (p.stepIndex ?? 0) + 1
       if (!p.didWin) return `Каскад: шаг ${stepNum} — конец (нет выигрыша)`
@@ -72,8 +73,10 @@ function formatLogMessage(entry) {
       const mult = p.cascadeMultiplier ?? 1
       const jp = Number(p.jackpotAmount ?? 0)
       const combo = p.combo ? ` ${p.combo}` : ''
-      const parts = [`Каскад: шаг ${stepNum} — ${p.name ?? 'WIN'}${combo} +${formatMoney(win)} (x${mult})`]
-      if (jp > 0) parts.push(`JP +${formatMoney(jp)}`)
+      const parts = [
+        `Каскад: шаг ${stepNum} — ${p.name ?? 'WIN'}${combo} +${formatMoneyFull(win)} (x${mult})`,
+      ]
+      if (jp > 0) parts.push(`JP +${formatMoneyFull(jp)}`)
       return parts.join(' · ')
     }
     case 'CASCADE_FINISH': {
@@ -81,8 +84,8 @@ function formatLogMessage(entry) {
       const jp = Number(p.jackpotAmount ?? 0)
       const reason = p.reason === 'deck-shortage' ? 'колода закончилась' : 'нет выигрыша'
       return jp > 0
-        ? `Каскад: завершён (${reason}) — итог +${formatMoney(total)} · JP +${formatMoney(jp)}`
-        : `Каскад: завершён (${reason}) — итог +${formatMoney(total)}`
+        ? `Каскад: завершён (${reason}) — итог +${formatMoneyFull(total)} · JP +${formatMoneyFull(jp)}`
+        : `Каскад: завершён (${reason}) — итог +${formatMoneyFull(total)}`
     }
     default:
       return String(type ?? 'EVENT')
@@ -127,6 +130,7 @@ async function copyToClipboard(text) {
  *  onToggleDebugOverlay: () => void,
  *  onRunJackpotSimulation: () => void,
  *  canRunJackpotSimulation: boolean,
+ *  onAddMoney?: (amount: number) => void,
  *  stateSnapshot: Record<string, any>,
  * }} props
  */
@@ -143,6 +147,7 @@ export function DevToolsDrawer({
   onToggleDebugOverlay,
   onRunJackpotSimulation,
   canRunJackpotSimulation,
+  onAddMoney,
   stateSnapshot,
 }) {
   const [copied, setCopied] = useState(false)
@@ -264,6 +269,37 @@ export function DevToolsDrawer({
               </div>
             </section>
 
+            {/* Add money */}
+            <section className="border border-slate-700 rounded-xl p-3 bg-black/20">
+              <div className="text-[10px] uppercase tracking-[0.28em] text-slate-300">Добавить денег</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[
+                  { amount: 1_000, label: '+1000' },
+                  { amount: 5_000, label: '+5000' },
+                  { amount: 10_000, label: '+10000' },
+                  { amount: 100_000, label: '+100000' },
+                  { amount: 1_000_000, label: '+1m' },
+                  { amount: 10_000_000, label: '+10m' },
+                ].map(({ amount, label }) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => onAddMoney?.(amount)}
+                    disabled={!allowed || !onAddMoney}
+                    className={[
+                      'h-9 px-3 rounded-lg border text-[10px] tracking-[0.12em]',
+                      allowed && onAddMoney
+                        ? 'bg-slate-900/40 border-slate-700 text-slate-100 hover:bg-slate-800/60'
+                        : 'bg-slate-900/20 border-slate-800 text-slate-500 cursor-not-allowed',
+                    ].join(' ')}
+                    title={`Добавить ${formatMoneyFull(amount)}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
             {/* State */}
             <section className="border border-slate-700 rounded-xl p-3 bg-black/20">
               <div className="text-[10px] uppercase tracking-[0.28em] text-slate-300">Стата</div>
@@ -273,14 +309,17 @@ export function DevToolsDrawer({
                   ['Состояние', formatGameState(stateSnapshot?.gameState)],
                   ['Turbo', stateSnapshot?.turbo ? 'ON' : 'OFF'],
                   ['Debug', stateSnapshot?.debug ? 'ON' : 'OFF'],
-                  ['Баланс', formatMoney(stateSnapshot?.balance)],
-                  ['Ставка', formatMoney(stateSnapshot?.bet)],
+                  ['Баланс', formatMoneyFull(stateSnapshot?.balance)],
+                  ['Ставка', formatMoneyFull(stateSnapshot?.bet)],
                   ['Колода (осталось)', String(stateSnapshot?.deckRemaining ?? 0)],
                   ['Колода (idx)', String(stateSnapshot?.dealIndex ?? 0)],
                   ['Колода (size)', String(stateSnapshot?.deckLen ?? 0)],
                   ['Каскад (шаг)', String(stateSnapshot?.cascadeStepIndex ?? 0)],
                   ['Каскады (последние)', String(stateSnapshot?.lastCascadeStepsCount ?? 0)],
-                  ['Джекпот (последний)', stateSnapshot?.lastWasJackpot ? `ДА +${formatMoney(stateSnapshot?.lastJackpotAmount)}` : 'нет'],
+                  [
+                    'Джекпот (последний)',
+                    stateSnapshot?.lastWasJackpot ? `ДА +${formatMoneyFull(stateSnapshot?.lastJackpotAmount)}` : 'нет',
+                  ],
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center justify-between gap-3">
                     <div className="text-slate-400">{label}</div>

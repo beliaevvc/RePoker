@@ -1,6 +1,13 @@
 # Прогресс
 
 ## Статус
+- В работе: UI — плашка CHIPS переполнялась на больших суммах (текст “вылазал” за карточку), перенос строки запрещён.
+- Сделано: добавлен общий helper форматирования денег (full/compact/adaptive) и подключён в `BalatroInferno` + `DevToolsDrawer`.
+- Сделано: CHIPS теперь показывает **adaptive** значение (full пока помещается, иначе compact), а полное значение доступно через `title` (tooltip).
+- Гейты: `npm run lint` — ✅ (в sandbox падал с EPERM на чтении `node_modules`, прогнан вне sandbox).
+- Гейты: `npm test` — ✅ (24/24).
+- Гейты: `npm run build` — ✅.
+- Дальше: обновить чеклист задачи и перейти в `/reflect`.
 - В работе: UI — на full desktop надпись “MAX WIN 150,000X” (`MaxWinPoster`) пересекалась с плашками CHIPS/ANTE.
 - Сделано: `MaxWinPoster` переведён на более безопасный layout внутри центральной колонки (`inset-x-0`, `text-center`, `px-1`, `leading-none`) и ограничен рост типографики на `2xl` (уменьшен max в `clamp()`), чтобы на 1920+ не “раздувалось” и не подрезалось соседними плашками.
 - Твик: “150,000X” заменено на “150.000x”, `x` сделан в 2 раза меньше (через `0.5em`), а вторая строка слегка опущена вниз (положительный `mt clamp`) для “воздуха”.
@@ -74,6 +81,7 @@
 - `memory-bank/archive/archive-2025-12-21-devtools-devmode-v1.md`
 - `memory-bank/archive/archive-2025-12-21-controls-block-height.md`
 - `memory-bank/archive/archive-2025-12-21-maxwin-poster-desktop.md`
+- `memory-bank/archive/archive-2025-12-21-chips-plaque-overflow.md`
 
 ## Сделано
 - Добавлены Cursor-команды Memory Bank в `/.cursor/commands/`.
@@ -118,6 +126,13 @@
 - Гейты (после удаления HUD): `npm run test`, `npm run lint`, `npm run build` — пройдены.
 
 ## Дальше
+- Дальше: `/van` для следующей задачи.
+- В работе: Dev Mode — добавить в `DevToolsDrawer` раздел “Добавить денег” с кнопками пополнения баланса.
+- Сделано: в `useBalatroInfernoController` добавлен dev-only action `addMoney(amount)` (guard `devToolsAllowed`, нормализация суммы, лог `BALANCE_ADD`).
+- Сделано: `BalatroInferno.jsx` пробрасывает `onAddMoney` в `DevToolsDrawer`.
+- Сделано: `DevToolsDrawer` получил секцию “Добавить денег” с кнопками +1000/+5000/+10000/+100000/+1m/+10m и отображает событие в логе.
+- QA: `npm run test` — ✅ (24/24), `npm run lint` — ✅, `npm run build` — ✅ (прогон вне sandbox: в sandbox `vitest` падал с `EPERM kill` в `tinypool`).
+- Архив: `memory-bank/archive/archive-2025-12-21-devtools-add-money.md`
 - Дальше: `/van` для следующей задачи.
 
 ## UI — кнопки (PLAY / TURBO / AUTO / +/-)

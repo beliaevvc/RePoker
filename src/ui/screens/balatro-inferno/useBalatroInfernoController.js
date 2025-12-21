@@ -225,12 +225,16 @@ export function useBalatroInfernoController() {
   const cascadeJackpotAmountRef = useRef(0)
   // refs для значений, которые меняются во время шага каскада (чтобы не перезапускать эффект)
   const betRef = useRef(bet)
+  const balanceRef = useRef(balance)
   const deckRef = useRef(deck)
   const dealIndexRef = useRef(dealIndex)
 
   useEffect(() => {
     betRef.current = bet
   }, [bet])
+  useEffect(() => {
+    balanceRef.current = balance
+  }, [balance])
   useEffect(() => {
     deckRef.current = deck
   }, [deck])
@@ -250,6 +254,8 @@ export function useBalatroInfernoController() {
     })
   }, [pushDevLog])
 
+  const cleanMoney = useCallback((n) => Math.round(Number(n ?? 0) * 1e10) / 1e10, [])
+
   const setMode = useCallback(
     (nextMode) => {
       _setMode((prev) => {
@@ -258,6 +264,23 @@ export function useBalatroInfernoController() {
       })
     },
     [pushDevLog],
+  )
+
+  const addMoney = useCallback(
+    (amount) => {
+      if (!devToolsAllowed) return
+      const amt = Number(amount)
+      if (!Number.isFinite(amt) || amt <= 0) return
+
+      // Делаем инкремент “синхронно” через ref, чтобы быстрые клики не терялись при batching.
+      const before = Number(balanceRef.current ?? 0)
+      const after = cleanMoney(before + amt)
+      balanceRef.current = after
+
+      setBalance(after)
+      pushDevLog('BALANCE_ADD', { amount: amt, balanceBefore: before, balanceAfter: after })
+    },
+    [devToolsAllowed, cleanMoney, pushDevLog],
   )
 
   const toggleDebugOverlay = useCallback((via = 'toggle') => {
@@ -733,6 +756,7 @@ export function useBalatroInfernoController() {
     devToolsAllowed,
     devToolsExplicit,
     devToolsOpen,
+    addMoney,
     setMode,
     toggleTurbo,
     handleDeal,

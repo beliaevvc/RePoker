@@ -19,6 +19,7 @@ import { CascadeMultiplierIndicator } from './components/CascadeMultiplierIndica
 import { DevToolsDrawer } from './components/DevToolsDrawer'
 import { PixelAutoIcon, PixelLightningIcon } from './components/PixelIcons'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
+import { formatMoneyAdaptive, formatMoneyFull } from './moneyFormat'
 
 function MaxWinPoster() {
   return (
@@ -98,6 +99,7 @@ export default function BalatroInferno() {
     devToolsOpen,
     setDevToolsOpen,
     enableDevToolsExplicit,
+    addMoney,
     hand,
     deck,
     deckRemaining,
@@ -126,7 +128,9 @@ export default function BalatroInferno() {
   const stepWinAmount = gameState === 'cascading' ? winBannerAmount : result ? bet * result.multiplier : 0
   const cascadeShowDimming = gameState === 'cascading' && showWinBanner && (result?.name ?? '') !== 'High Card'
 
-  const formatMoney = (n) => Number(n || 0).toFixed(2)
+  const chipsDisplay = formatMoneyAdaptive(balance)
+  const chipsTitle = formatMoneyFull(balance)
+  const betDisplay = formatMoneyFull(bet)
 
   const displayHandIsComplete = Array.isArray(hand) && hand.length === 5 && hand.every(Boolean)
   const displayEval = displayHandIsComplete ? getBestHand(hand) : null
@@ -186,6 +190,7 @@ export default function BalatroInferno() {
           onToggleDebugOverlay={() => toggleDebugOverlay('button')}
           onRunJackpotSimulation={runJackpotSimulation}
           canRunJackpotSimulation={canRunJackpotSim}
+          onAddMoney={addMoney}
           stateSnapshot={{
             mode,
             gameState,
@@ -358,14 +363,19 @@ export default function BalatroInferno() {
 
         <div className="w-full max-w-5xl px-3 sm:px-4 grid grid-cols-3 items-start gap-2 sm:gap-4 relative">
           <div
-            className={`bg-[#1e293b] border-l-4 border-blue-500 pl-3 sm:pl-4 pr-4 sm:pr-6 py-2 rounded-r-xl shadow-lg skew-x-[-10deg] z-10 transition-opacity duration-300 ${
+            className={`bg-[#1e293b] border-l-4 border-blue-500 pl-3 sm:pl-4 pr-4 sm:pr-6 py-2 rounded-r-xl shadow-lg skew-x-[-10deg] z-10 transition-opacity duration-300 min-w-0 ${
               tier === 7 ? 'opacity-0' : 'opacity-100'
             }`}
           >
             <div className="text-[10px] text-blue-300 uppercase tracking-[0.2em] sm:tracking-widest skew-x-[10deg]">
               CHIPS
             </div>
-            <div className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg]">${formatMoney(balance)}</div>
+            <div
+              className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] whitespace-nowrap overflow-hidden"
+              title={chipsTitle}
+            >
+              {chipsDisplay}
+            </div>
           </div>
 
           <div className="relative flex justify-center">
@@ -380,7 +390,9 @@ export default function BalatroInferno() {
             <div className="text-[10px] text-red-300 uppercase tracking-[0.2em] sm:tracking-widest skew-x-[10deg] text-right">
               ANTE
             </div>
-            <div className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] text-right">${formatMoney(bet)}</div>
+            <div className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] text-right whitespace-nowrap overflow-hidden">
+              {betDisplay}
+            </div>
           </div>
         </div>
 
@@ -407,7 +419,7 @@ export default function BalatroInferno() {
                   {showCascadeTotalBanner ? 'TOTAL WIN' : result?.name}
                 </div>
                 <div className="text-base sm:text-lg md:text-2xl text-center mt-2 text-white break-words">
-                  +${formatMoney(showCascadeTotalBanner ? lastCascadeTotalWin : stepWinAmount)}
+                  +{formatMoneyFull(showCascadeTotalBanner ? lastCascadeTotalWin : stepWinAmount)}
                 </div>
                 {mode === 'cascade' && gameState === 'cascading' && showStepWinBanner && cascadeWinStepNumber > 0 && (
                   <div className="text-[10px] sm:text-xs text-center mt-2 text-slate-300 uppercase tracking-[0.28em]">
