@@ -22,7 +22,7 @@ export const HAND_TIERS: Record<string, number> = {
 
 export const HAND_MULTIPLIERS: Record<string, number> = {
   // Новая таблица выплат (x на ставку игрока)
-  Pair: 0.3,
+  Pair: 0.2,
   'Two Pair': 1,
   'Three of a Kind': 5,
   Straight: 10,

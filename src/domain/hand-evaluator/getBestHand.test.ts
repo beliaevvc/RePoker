@@ -35,11 +35,11 @@ describe('getBestHand', () => {
     expect(res.winningIndices).toEqual([0, 1, 2, 3, 4])
   })
 
-  it('Pair платит 0.3x', () => {
+  it('Pair платит 0.2x', () => {
     const hand = [c('hearts', 2), c('spades', 2), c('clubs', 9), c('diamonds', 5), c('hearts', 7)]
     const res = getBestHand(hand)
     expect(res.name).toBe('Pair')
-    expect(res.multiplier).toBe(0.3)
+    expect(res.multiplier).toBe(0.2)
   })
 
   it('Two Pair платит 1x', () => {

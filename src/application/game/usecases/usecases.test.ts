@@ -37,9 +37,9 @@ describe('resolveResultUseCase', () => {
       balance: 100,
       bet: 10,
       streak: 4,
-      evalResult: { name: 'Pair', multiplier: 0.3, score: 200, winningIndices: [0, 1] },
+      evalResult: { name: 'Pair', multiplier: 0.2, score: 200, winningIndices: [0, 1] },
     })
-    expect(out.balance).toBe(103)
+    expect(out.balance).toBe(102)
     expect(out.streak).toBe(5)
     expect(out.gameState).toBe('result')
     expect(out.result?.name).toBe('Pair')
@@ -101,7 +101,7 @@ describe('buildCascadeSequenceUseCase', () => {
     const out = buildCascadeSequenceUseCase({ bet: 10, hand: initialHand, deck, dealIndex: 0, maxSteps: 10 })
 
     expect(out.steps.length).toBe(1)
-    expect(out.totalWin).toBe(3) // Pair multiplier = 0.3
+    expect(out.totalWin).toBe(2) // Pair multiplier = 0.2
     expect(out.steps[0].evalResult.name).toBe('Pair')
     expect(out.steps[0].evalResult.winningIndices).toEqual([0, 1])
     expect(out.steps[0].didDeckShortage).toBe(false)
@@ -124,7 +124,7 @@ describe('buildCascadeSequenceUseCase', () => {
     const out = buildCascadeSequenceUseCase({ bet: 10, hand: initialHand, deck, dealIndex: 0 })
 
     expect(out.steps.length).toBe(2)
-    expect(out.totalWin).toBe(6) // 2 wins по Pair*10
+    expect(out.totalWin).toBe(4) // 2 wins по Pair*10
 
     // после 2 шагов мы должны съесть 4 карты из deck
     expect(out.finalDealIndex).toBe(4)
@@ -185,10 +185,10 @@ describe('applyCascadeStepUseCase', () => {
     const hand = [c('hearts', 2, 'h2'), c('spades', 2, 's2'), c('clubs', 9, 'c9'), c('diamonds', 5, 'd5'), c('hearts', 7, 'h7')]
     const deck = [c('diamonds', 3, 'd3'), c('clubs', 4, 'c4')]
     const out = applyCascadeStepUseCase({ bet: 10, hand, deck, dealIndex: 0, winStepNumber: 2 })
-    // Pair=0.3 => base=3; winStepNumber=2 => x2 => 6
-    expect(out.baseWinAmount).toBe(3)
+    // Pair=0.2 => base=2; winStepNumber=2 => x2 => 4
+    expect(out.baseWinAmount).toBe(2)
     expect(out.cascadeMultiplier).toBe(2)
-    expect(out.winAmount).toBe(6)
+    expect(out.winAmount).toBe(4)
     expect(out.jackpotAmount).toBe(0)
   })
 
