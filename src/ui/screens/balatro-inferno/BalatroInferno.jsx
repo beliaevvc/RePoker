@@ -27,10 +27,10 @@ import { formatMoneyAdaptive, formatMoneyFull } from './moneyFormat'
 function MaxWinPoster() {
   return (
     <div className="absolute inset-x-0 top-0 md:top-1 flex flex-col items-center justify-center select-none z-0 pointer-events-none px-1 text-center">
-      <div className="text-[clamp(10px,1.4vw,14px)] 2xl:text-[clamp(10px,1.0vw,13px)] font-black text-yellow-400 tracking-[clamp(0.16em,0.35vw,0.22em)] leading-none transform -skew-x-12 drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">
+      <div className="maxwin-poster-label text-[clamp(8px,1.8vw,14px)] sm:text-[clamp(10px,1.4vw,14px)] 2xl:text-[clamp(10px,1.0vw,13px)] font-black text-yellow-400 tracking-[clamp(0.14em,0.32vw,0.22em)] leading-none transform -skew-x-12 drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">
         MAX WIN
       </div>
-      <div className="text-[clamp(22px,3.6vw,48px)] 2xl:text-[clamp(20px,2.6vw,40px)] font-black text-gold-shimmer tracking-tighter leading-none transform -skew-x-12 drop-shadow-[2px_2px_0_rgba(0,0,0,1)] mt-[clamp(2px,0.4vw,6px)]">
+      <div className="maxwin-poster-value text-[clamp(16px,5.6vw,48px)] sm:text-[clamp(22px,3.6vw,48px)] 2xl:text-[clamp(20px,2.6vw,40px)] font-black text-gold-shimmer tracking-tighter leading-none transform -skew-x-12 drop-shadow-[2px_2px_0_rgba(0,0,0,1)] mt-[clamp(2px,0.4vw,6px)]">
         150.000<span className="text-[0.5em] leading-none">x</span>
       </div>
     </div>
@@ -139,6 +139,15 @@ export default function BalatroInferno() {
     setPaytableModalOpen,
   } = useBalatroInfernoController()
 
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const apply = () => setIsMobileViewport(Boolean(mq.matches))
+    apply()
+    mq.addEventListener?.('change', apply)
+    return () => mq.removeEventListener?.('change', apply)
+  }, [])
+
   const canChangeMode = gameState === 'idle' || gameState === 'result'
   const showCascadeTotalBanner = mode === 'cascade' && gameState === 'result' && lastCascadeTotalWin > 0
   const runMaxWinCinematic = mode === 'cascade' && gameState === 'result' && showCascadeTotalBanner && lastWasJackpot
@@ -199,7 +208,7 @@ export default function BalatroInferno() {
     }
   }, [mode, gameState, showStepWinBanner, cascadeWinStepNumber, cascadeMultiplier, cascadeWinHistory, lastCascadeWinHistory])
 
-  const chipsDisplay = formatMoneyAdaptive(balance)
+  const chipsDisplay = isMobileViewport ? formatMoneyAdaptive(balance, { maxFullLength: 10, compactFrom: 100_000 }) : formatMoneyAdaptive(balance)
   const chipsTitle = formatMoneyFull(balance)
   const betDisplay = formatMoneyFull(bet)
   const canStartAuto = balance >= bet
@@ -212,15 +221,6 @@ export default function BalatroInferno() {
     displayEval &&
     debugSnapshot.evalResult &&
     displayEval.name !== debugSnapshot.evalResult.name
-
-  const [isMobileViewport, setIsMobileViewport] = useState(false)
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 639px)')
-    const apply = () => setIsMobileViewport(Boolean(mq.matches))
-    apply()
-    mq.addEventListener?.('change', apply)
-    return () => mq.removeEventListener?.('change', apply)
-  }, [])
 
   // DEV-кнопка:
   // - на desktop показываем всегда (чтобы не было “куда пропало?”)
@@ -469,7 +469,7 @@ export default function BalatroInferno() {
         </div>
 
 
-        <div className="w-full max-w-5xl px-3 sm:px-4 grid grid-cols-3 items-start gap-2 sm:gap-4 relative">
+        <div className="w-full max-w-5xl px-3 sm:px-4 grid grid-cols-[minmax(0,1fr)_minmax(0,0.62fr)_minmax(0,1fr)] sm:grid-cols-3 items-start gap-2 sm:gap-4 relative">
           <div
             className={`bg-[#1e293b] border-l-4 border-blue-500 pl-3 sm:pl-4 pr-4 sm:pr-6 py-2 rounded-r-xl shadow-lg skew-x-[-10deg] z-10 transition-opacity duration-300 min-w-0 ${
               tier === 7 ? 'opacity-0' : 'opacity-100'
@@ -479,14 +479,14 @@ export default function BalatroInferno() {
               CHIPS
             </div>
             <div
-              className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] whitespace-nowrap overflow-hidden"
+              className="text-[clamp(14px,4.2vw,32px)] sm:text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] truncate max-w-full"
               title={chipsTitle}
             >
               {chipsDisplay}
             </div>
           </div>
 
-          <div className="relative flex justify-center">
+          <div className="relative flex justify-center maxwin-container">
             {tier !== 7 && <MaxWinPoster />}
           </div>
 
@@ -498,7 +498,7 @@ export default function BalatroInferno() {
             <div className="text-[10px] text-red-300 uppercase tracking-[0.2em] sm:tracking-widest skew-x-[10deg] text-right">
               ANTE
             </div>
-            <div className="text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] text-right whitespace-nowrap overflow-hidden">
+            <div className="text-[clamp(14px,4.2vw,32px)] sm:text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] text-right truncate max-w-full">
               {betDisplay}
             </div>
           </div>

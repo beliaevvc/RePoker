@@ -269,6 +269,25 @@
   animation: shine 0.5s linear;
 }
 
+/* MAX WIN poster: на mobile масштабируем текст от ширины *центральной* колонки (cqw),
+   но НЕ трогаем desktop — там остаётся прежний vw-clamp. */
+@supports (container-type: inline-size) {
+  @media (max-width: 639px) {
+    .maxwin-container {
+      container-type: inline-size;
+    }
+
+    .maxwin-container .maxwin-poster-label {
+      font-size: clamp(8px, 5.2cqw, 13px);
+      letter-spacing: clamp(0.12em, 1.2cqw, 0.2em);
+    }
+
+    .maxwin-container .maxwin-poster-value {
+      font-size: clamp(16px, 12.5cqw, 38px);
+    }
+  }
+}
+
 /* GOLD SHIMMER TEXT (MAX WIN) */
 @keyframes gold-shimmer {
   0% {
