@@ -19,6 +19,7 @@ import { CascadeMultiplierIndicator } from './components/CascadeMultiplierIndica
 import { DevToolsDrawer } from './components/DevToolsDrawer'
 import { AutoPlayModal } from './components/AutoPlayModal'
 import { CascadeHistoryModal } from './components/CascadeHistoryModal'
+import { PaytableModal } from './components/PaytableModal'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 import { getCascadeMultiplierForWinStep } from '../../../application/game/cascadeMultiplier'
 import { formatMoneyAdaptive, formatMoneyFull } from './moneyFormat'
@@ -134,6 +135,8 @@ export default function BalatroInferno() {
     lastCascadeWinHistory,
     historyModalOpen,
     setHistoryModalOpen,
+    paytableModalOpen,
+    setPaytableModalOpen,
   } = useBalatroInfernoController()
 
   const canChangeMode = gameState === 'idle' || gameState === 'result'
@@ -328,6 +331,13 @@ export default function BalatroInferno() {
         onClose={() => setHistoryModalOpen(false)}
       />
 
+      <PaytableModal
+        open={paytableModalOpen}
+        bet={Number(bet || 0)}
+        onAdjustBet={adjustBet}
+        onClose={() => setPaytableModalOpen(false)}
+      />
+
       <div
         className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-[clamp(8px,2vh,24px)] ${effectiveShakeClass} ${
           runMaxWinCinematic ? 'maxwin-cinematic-shake' : ''
@@ -389,6 +399,14 @@ export default function BalatroInferno() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setPaytableModalOpen(true)}
+              className="mr-1 sm:mr-2 text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest border-b border-transparent hover:border-slate-400 transition-all"
+            >
+              PAYTABLE
+            </button>
+
             <div className="inline-flex rounded-lg overflow-hidden border border-slate-700 bg-slate-900/50">
             <button
               type="button"
