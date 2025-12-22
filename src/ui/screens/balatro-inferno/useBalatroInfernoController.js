@@ -171,6 +171,10 @@ export function useBalatroInfernoController() {
   const [lastCascadeStepsCount, setLastCascadeStepsCount] = useState(0)
   const [lastWasJackpot, setLastWasJackpot] = useState(false)
   const [lastJackpotAmount, setLastJackpotAmount] = useState(0)
+  const [cascadeWinHistory, setCascadeWinHistory] = useState([])
+  const [lastCascadeWinHistory, setLastCascadeWinHistory] = useState([])
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
+  const cascadeWinHistoryRef = useRef([]) // актуальная история для таймеров (чтобы не перезапускать эффекты)
   const [cascadeVanishingIndices, setCascadeVanishingIndices] = useState([])
   const [cascadeAppearingIndices, setCascadeAppearingIndices] = useState([])
   const [cascadeHighlightIndices, setCascadeHighlightIndices] = useState([])
@@ -320,7 +324,10 @@ export function useBalatroInfernoController() {
     setCascadeRefillFlash(false)
     setShowWinBanner(false)
     setWinBannerAmount(0)
-    // Не очищаем debugSnapshot здесь: нужно видеть состояние на финальном экране `result`.
+    // Очищаем debugSnapshot здесь: нужно видеть состояние на финальном экране `result`.
+    // Но cascadeWinHistory очищаем (перенесли в lastCascadeWinHistory)
+    setCascadeWinHistory([])
+    cascadeWinHistoryRef.current = []
 
     cascadeLogicalHandRef.current = null
     cascadeTotalWinRef.current = 0
@@ -337,6 +344,9 @@ export function useBalatroInfernoController() {
     setLastCascadeStepsCount(0)
     setLastWasJackpot(false)
     setLastJackpotAmount(0)
+    setCascadeWinHistory([])
+    setLastCascadeWinHistory([])
+    cascadeWinHistoryRef.current = []
     setDebugSnapshot(null)
     setDebugLastWinSnapshot(null)
   }, [clearCascadeActive])
@@ -511,6 +521,7 @@ export function useBalatroInfernoController() {
   useEffect(() => {
     if (gameState !== 'cascading') return
 
+    // Добавляем cascadeWinHistory в зависимости, чтобы замыкание имело актуальное значение при завершении каскада
     const token = ++cascadeAnimTokenRef.current
     const logicalHand = cascadeLogicalHandRef.current
     if (!logicalHand) return
@@ -542,6 +553,21 @@ export function useBalatroInfernoController() {
     // Логический totalWin увеличиваем сразу при вычислении выигрышного шага (а не после refill-анимаций),
     // чтобы UI мог показать “накопительный WIN” уже во время баннера шага.
     if (step.didWin) {
+      const newEntry = {
+        stepIndex: cascadeStepIndex,
+        winStepNumber,
+        comboName: step.evalResult?.name ?? '',
+        comboSignature: formatComboSignature(step.evalResult, logicalHand),
+        winningIndices: step.winningIndices ?? [],
+        hand: logicalHand.slice(),
+        baseWinAmount: step.baseWinAmount,
+        cascadeMultiplier: step.cascadeMultiplier,
+        winAmount: step.winAmount,
+        jackpotAmount,
+      }
+      setCascadeWinHistory((prev) => [...prev, newEntry])
+      cascadeWinHistoryRef.current = [...cascadeWinHistoryRef.current, newEntry]
+
       cascadeTotalWinRef.current = cascadeTotalWinRef.current + stepTotalGain
       if (jackpotAmount > 0) {
         cascadeDidJackpotRef.current = true
@@ -600,6 +626,9 @@ export function useBalatroInfernoController() {
         setLastCascadeStepsCount(cascadeStepIndex)
         setLastWasJackpot(wasJackpot)
         setLastJackpotAmount(jackpotAmount)
+        // ВАЖНО: фиксируем историю для финального экрана.
+        // Берем актуальную историю из ref (так как внутри таймера стейт может быть из замыкания)
+        setLastCascadeWinHistory(cascadeWinHistoryRef.current)
 
         // ВАЖНО (UX): на финале каскада рука уже финальная (после добора) и может быть проигрышной.
         // Поэтому в `result` кладём фактический финальный eval (обычно High Card), а totalWin показываем отдельным баннером.
@@ -733,6 +762,7 @@ export function useBalatroInfernoController() {
         setLastCascadeStepsCount(cascadeStepIndex + 1)
         setLastWasJackpot(wasJackpot)
         setLastJackpotAmount(jackpotAmount)
+        setLastCascadeWinHistory(cascadeWinHistoryRef.current)
 
         setDebugSnapshot({
           ...computed,
@@ -763,6 +793,8 @@ export function useBalatroInfernoController() {
     clearCascadeActive,
     turboEnabled,
     pushDevLog,
+    // cascadeWinHistory - УБРАНО из зависимостей, т.к. обновление стейта внутри эффекта перезапускает эффект
+    // и ломает таймеры (сбрасывается token). Для доступа к актуальной истории в таймерах используем ref.
   ])
 
   const handleDeal = () => {
@@ -807,6 +839,8 @@ export function useBalatroInfernoController() {
     setCascadeRunningTotalWin(0)
     setShowWinBanner(false)
     setWinBannerAmount(0)
+    setCascadeWinHistory(() => []) // явный сброс
+    cascadeWinHistoryRef.current = []
     setResult(null)
     setHand([])
     setGameState('idle')
@@ -891,6 +925,12 @@ export function useBalatroInfernoController() {
     autoLastStopReason,
     startAuto,
     stopAuto,
+
+    // Cascade History
+    cascadeWinHistory,
+    lastCascadeWinHistory,
+    historyModalOpen,
+    setHistoryModalOpen,
   }
 }
 

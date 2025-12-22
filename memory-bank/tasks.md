@@ -10,11 +10,12 @@
 -
 
 ## Чеклист
-- [ ] 
+- [ ] ...
 
 ---
 
 ## Последние завершённые
+- (завершено) UI/CASCADE: история выигрышей каскада — `WINS (N)` + модалка (scroll) + mini-cards + блокировка во время каскада (`archive-2025-12-23-cascade-win-history.md`)
 - (завершено) UI (CASCADE): running `WIN` под `CASCADE MULT` + анимация инкремента + показ на финале + без layout jump (`archive-2025-12-23-cascade-running-win.md`)
 - (завершено) Баланс: Pair payout 0.3x → 0.2x (`archive-2025-12-23-pair-0.2x.md`)
 - (завершено) UI/UX CASCADE: preview множителя (current/next) + **x1 всегда горит** (OFF убран).

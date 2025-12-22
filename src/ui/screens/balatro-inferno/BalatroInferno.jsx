@@ -18,6 +18,7 @@ import { ElectricPlasmaOrbs } from './components/ElectricPlasmaOrbs'
 import { CascadeMultiplierIndicator } from './components/CascadeMultiplierIndicator'
 import { DevToolsDrawer } from './components/DevToolsDrawer'
 import { AutoPlayModal } from './components/AutoPlayModal'
+import { CascadeHistoryModal } from './components/CascadeHistoryModal'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 import { getCascadeMultiplierForWinStep } from '../../../application/game/cascadeMultiplier'
 import { formatMoneyAdaptive, formatMoneyFull } from './moneyFormat'
@@ -127,6 +128,12 @@ export default function BalatroInferno() {
     autoRemaining,
     startAuto,
     stopAuto,
+
+    // Cascade History
+    cascadeWinHistory,
+    lastCascadeWinHistory,
+    historyModalOpen,
+    setHistoryModalOpen,
   } = useBalatroInfernoController()
 
   const canChangeMode = gameState === 'idle' || gameState === 'result'
@@ -147,6 +154,12 @@ export default function BalatroInferno() {
   const cascadeMultIndicator = useMemo(() => {
     if (mode !== 'cascade') return null
 
+    // Определяем, какую историю и какое кол-во побед показывать
+    // Если результат (result) - показываем историю из последнего каскада
+    // Если в процессе (cascading) - показываем текущую историю
+    const historyToShow = gameState === 'result' ? lastCascadeWinHistory : cascadeWinHistory
+    const winsCount = historyToShow.length
+
     if (gameState === 'cascading') {
       // Во время баннера показываем "текущий" шаг (к нему применён `cascadeMultiplier`).
       if (showStepWinBanner && cascadeWinStepNumber > 0) {
@@ -154,6 +167,8 @@ export default function BalatroInferno() {
           armed: true,
           winStepNumber: cascadeWinStepNumber,
           multiplier: cascadeMultiplier,
+          winsCount,
+          historyEnabled: false,
         }
       }
 
@@ -164,6 +179,8 @@ export default function BalatroInferno() {
         armed: true,
         winStepNumber: nextStep,
         multiplier: getCascadeMultiplierForWinStep(nextStep),
+        winsCount,
+        historyEnabled: false,
       }
     }
 
@@ -174,8 +191,10 @@ export default function BalatroInferno() {
       armed: true,
       winStepNumber,
       multiplier: getCascadeMultiplierForWinStep(winStepNumber),
+      winsCount: gameState === 'result' ? lastCascadeWinHistory.length : 0,
+      historyEnabled: true,
     }
-  }, [mode, gameState, showStepWinBanner, cascadeWinStepNumber, cascadeMultiplier])
+  }, [mode, gameState, showStepWinBanner, cascadeWinStepNumber, cascadeMultiplier, cascadeWinHistory, lastCascadeWinHistory])
 
   const chipsDisplay = formatMoneyAdaptive(balance)
   const chipsTitle = formatMoneyFull(balance)
@@ -300,6 +319,13 @@ export default function BalatroInferno() {
           setAutoModalOpen(false)
         }}
         onClose={() => setAutoModalOpen(false)}
+      />
+
+      <CascadeHistoryModal
+        open={historyModalOpen}
+        history={gameState === 'result' ? lastCascadeWinHistory : cascadeWinHistory}
+        totalWin={gameState === 'result' ? lastCascadeTotalWin : cascadeRunningTotalWin}
+        onClose={() => setHistoryModalOpen(false)}
       />
 
       <div
@@ -561,6 +587,9 @@ export default function BalatroInferno() {
                   runningWin={cascadeWinValue}
                   showRunningWin={showCascadeRunningWin}
                   timeFactor={turboEnabled ? 0.5 : 1}
+                  onOpenHistory={() => setHistoryModalOpen(true)}
+                  winsCount={cascadeMultIndicator.winsCount}
+                  historyEnabled={cascadeMultIndicator.historyEnabled}
                 />
               ) : (
                 <div className="h-12" />

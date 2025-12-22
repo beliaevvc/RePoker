@@ -26,6 +26,9 @@ const LEVELS = [
  *   runningWin?: number,
  *   showRunningWin?: boolean,
  *   timeFactor?: number,
+ *   onOpenHistory?: () => void,
+ *   winsCount?: number,
+ *   historyEnabled?: boolean,
  * }} props
  * @returns {JSX.Element}
  */
@@ -36,6 +39,9 @@ export function CascadeMultiplierIndicator({
   runningWin = 0,
   showRunningWin = false,
   timeFactor = 1,
+  onOpenHistory,
+  winsCount = 0,
+  historyEnabled = false,
 }) {
   const activeIdx = armed ? LEVELS.findIndex((l) => l.value === multiplier) : -1
   const idx = activeIdx >= 0 ? activeIdx : -1
@@ -132,14 +138,33 @@ export function CascadeMultiplierIndicator({
       {/* ВАЖНО: место под WIN всегда зарезервировано, чтобы при появлении ничего не “подпрыгивало”. */}
       <div
         className={[
-          'mt-3 h-5 text-[11px] uppercase tracking-[0.24em] text-slate-300/90 leading-none',
+          'mt-3 h-5 text-[11px] uppercase tracking-[0.24em] text-slate-300/90 leading-none flex items-center gap-4',
           showRunningWin ? 'opacity-100' : 'opacity-0 pointer-events-none',
         ].join(' ')}
       >
+        <span>
           <span className="text-slate-400">WIN </span>
-        <span key={winPopNonce} className="text-white cascade-win-glow animate-cascade-win-pop text-[12px]">
-          {Number.isFinite(displayWin) ? WIN_FORMATTER.format(displayWin) : '0.00'}
+          <span key={winPopNonce} className="text-white cascade-win-glow animate-cascade-win-pop text-[12px]">
+            {Number.isFinite(displayWin) ? WIN_FORMATTER.format(displayWin) : '0.00'}
+          </span>
         </span>
+
+        {winsCount > 0 && onOpenHistory && (
+          <button
+            onClick={historyEnabled ? onOpenHistory : undefined}
+            disabled={!historyEnabled}
+            className={[
+              'text-[10px] transition-all duration-300',
+              historyEnabled
+                ? 'text-slate-300 hover:text-white border-b border-slate-500 hover:border-white cursor-pointer animate-pulse-slow-glow'
+                : 'text-slate-600 border-b border-transparent cursor-not-allowed',
+              'pb-[1px]',
+            ].join(' ')}
+            title={historyEnabled ? 'Показать историю выигрышей' : 'История доступна после завершения каскада'}
+          >
+            WINS ({winsCount})
+          </button>
+        )}
       </div>
     </div>
   )

@@ -1,11 +1,13 @@
 # Прогресс
 
 ## Статус
+- Сделано (UI/CASCADE): добавлена **история выигрышей каскада** — кнопка `WINS (N)` под `CASCADE MULT` открывает модалку со скролл-списком всех win-шагов (STEP, рука, сумма, множитель, 5 мини‑карт). Кнопка активна **только после завершения каскада** и слегка “шимерит”.
 - Сделано (UI/CASCADE): под `CASCADE MULT` добавлен **накопительный** индикатор `WIN {total}` — появляется **только после первого выигрыша** и на каждом win‑каскаде **анимировано прибавляется** на сумму шага; скрывается при переходе в финальный баннер `TOTAL WIN`.
 - Апдейт по фидбэку: `WIN` теперь расположен **под мультипликаторами**, **остаётся видимым на экране результата** вместе с финальным баннером, и **сбрасывается перед новой сдачей**.
 - Технически: `cascadeRunningTotalWin` теперь обновляется **в момент reveal win‑баннера шага** (для синхронной анимации), без двойного инкремента; добавлены CSS `animate-cascade-win-pop` + `cascade-win-glow`.
 - Гейты: `npm run lint` — ✅, `npm test` — ✅ (24/24), `npm run build` — ✅ (прогон вне sandbox из-за `EPERM` на чтении `node_modules` в sandbox).
 - Архив: `memory-bank/archive/archive-2025-12-23-cascade-running-win.md`
+- Архив: `memory-bank/archive/archive-2025-12-23-cascade-win-history.md`
 - Завершено: баланс — снижена выплата за **Pair** с 0.3x на 0.2x.
 - Сделано: обновлён доменный источник истины `HAND_MULTIPLIERS.Pair` (0.3 → 0.2).
 - Сделано: обновлены unit-тесты (domain/application), которые ожидали 0.3x и расчёты на базе 0.3×bet.
@@ -114,6 +116,7 @@
 - `memory-bank/archive/archive-2025-12-21-chips-plaque-overflow.md`
 - `memory-bank/archive/archive-2025-12-21-autoplay.md`
 - `memory-bank/archive/archive-2025-12-21-maxwin-gold-shimmer.md`
+- `memory-bank/archive/archive-2025-12-23-cascade-win-history.md`
 
 ## Сделано
 - Добавлены Cursor-команды Memory Bank в `/.cursor/commands/`.
