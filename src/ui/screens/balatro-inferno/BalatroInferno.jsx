@@ -19,6 +19,7 @@ import { CascadeMultiplierIndicator } from './components/CascadeMultiplierIndica
 import { DevToolsDrawer } from './components/DevToolsDrawer'
 import { AutoPlayModal } from './components/AutoPlayModal'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
+import { getCascadeMultiplierForWinStep } from '../../../application/game/cascadeMultiplier'
 import { formatMoneyAdaptive, formatMoneyFull } from './moneyFormat'
 
 function MaxWinPoster() {
@@ -137,6 +138,39 @@ export default function BalatroInferno() {
     (gameState === 'cascading' && showWinBanner && (result?.multiplier ?? 0) > 0)
   const stepWinAmount = gameState === 'cascading' ? winBannerAmount : result ? bet * result.multiplier : 0
   const cascadeShowDimming = gameState === 'cascading' && showWinBanner && (result?.name ?? '') !== 'High Card'
+
+  const cascadeMultIndicator = useMemo(() => {
+    if (mode !== 'cascade') return null
+
+    if (gameState === 'cascading') {
+      // Во время баннера показываем "текущий" шаг (к нему применён `cascadeMultiplier`).
+      if (showStepWinBanner && cascadeWinStepNumber > 0) {
+        return {
+          armed: true,
+          winStepNumber: cascadeWinStepNumber,
+          multiplier: cascadeMultiplier,
+        }
+      }
+
+      // Между шагами показываем "следующий потенциальный" множитель.
+      // Если ещё не было win-шага, это всё ещё STEP 1 / x1.
+      const nextStep = cascadeWinStepNumber > 0 ? cascadeWinStepNumber + 1 : 1
+      return {
+        armed: true,
+        winStepNumber: nextStep,
+        multiplier: getCascadeMultiplierForWinStep(nextStep),
+      }
+    }
+
+    // UX: в CASCADE индикатор висит всегда и **x1 горит всегда** (без OFF).
+    // До первого win-шага каскада показываем STEP 1 / x1 (включая idle/result).
+    const winStepNumber = 1
+    return {
+      armed: true,
+      winStepNumber,
+      multiplier: getCascadeMultiplierForWinStep(winStepNumber),
+    }
+  }, [mode, gameState, showStepWinBanner, cascadeWinStepNumber, cascadeMultiplier])
 
   const chipsDisplay = formatMoneyAdaptive(balance)
   const chipsTitle = formatMoneyFull(balance)
@@ -514,11 +548,11 @@ export default function BalatroInferno() {
             </div>
 
             {mode === 'cascade' ? (
-              gameState === 'cascading' && cascadeWinStepNumber > 0 ? (
+              cascadeMultIndicator ? (
                 <CascadeMultiplierIndicator
-                  key={`${cascadeWinStepNumber}-${cascadeMultiplier}`}
-                  multiplier={cascadeMultiplier}
-                  winStepNumber={cascadeWinStepNumber}
+                  multiplier={cascadeMultIndicator.multiplier}
+                  winStepNumber={cascadeMultIndicator.winStepNumber}
+                  armed={cascadeMultIndicator.armed}
                 />
               ) : (
                 <div className="h-12" />

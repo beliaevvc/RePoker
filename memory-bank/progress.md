@@ -1,6 +1,19 @@
 # Прогресс
 
 ## Статус
+- В работе: UI — каскадные множители должны отображаться “заранее” после раздачи (до подсветки/баннера), чтобы игрок видел потенциал следующего шага.
+- Сделано: `CascadeMultiplierIndicator` в CASCADE теперь рендерится в `suspense` (STEP 1 / x1) и в `cascading` показывает:
+  - во время win-баннера — текущий шаг (STEP N / xN применённый),
+  - между шагами — следующий потенциальный (STEP N+1 / x...).
+- Сделано: preview-множитель считается через `getCascadeMultiplierForWinStep` (без дублирования таблицы).
+- Дальше: прогнать гейты (test/lint/build) и быстро руками проверить: после раздачи виден STEP1/x1, после 1-го win (баннер скрылся) виден STEP2/x2.
+- Гейты: `npm run test` — ✅ (24/24), `npm run lint` — ✅, `npm run build` — ✅ (прогон вне sandbox, т.к. в sandbox `vitest` падал `EPERM kill`).
+- Апдейт по UX: плашка `CascadeMultiplierIndicator` в режиме CASCADE теперь **висит всегда** (не пропадает), а вне активного каскада **сбрасывается** на `STEP 1 / x1`.
+- Гейты после апдейта: `npm run test` — ✅ (24/24), `npm run lint` — ✅, `npm run build` — ✅ (вне sandbox).
+- Апдейт по UX (ещё точнее): **до старта новой раздачи** (idle/result) плашка в CASCADE находится в режиме **OFF** (ничего не горит, `x—`), а **с начала dealing** сразу “зажигается” `STEP 1 / x1`.
+- Апдейт по UX (STEP): в режиме OFF теперь показываем **STEP 0** (пока шага ещё нет).
+- Уточнение: OFF отменён — в CASCADE **x1 горит всегда** (даже в `idle/result` показываем `STEP 1 / x1`).
+- Архив: `memory-bank/archive/archive-2025-12-22-cascade-mult-preview-x1.md`
 - В работе: UI — “MAX WIN 150.000x” в шапке перестал быть золотым с переливом.
 - Найдено: в `BalatroInferno.jsx` используется класс `text-gold-shimmer`, но его определения в CSS не было, поэтому стиль не применялся.
 - Сделано: добавлен `.text-gold-shimmer` + анимация перелива `@keyframes gold-shimmer` в `src/balatroInferno.css` (с `prefers-reduced-motion` fallback).

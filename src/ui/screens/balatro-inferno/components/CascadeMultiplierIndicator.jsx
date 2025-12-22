@@ -12,18 +12,18 @@ const LEVELS = [
 ]
 
 /**
- * @param {{ multiplier: number, winStepNumber: number }} props
+ * @param {{ multiplier: number, winStepNumber: number, armed?: boolean }} props
  * @returns {JSX.Element}
  */
-export function CascadeMultiplierIndicator({ multiplier, winStepNumber }) {
-  const activeIdx = LEVELS.findIndex((l) => l.value === multiplier)
-  const idx = activeIdx >= 0 ? activeIdx : 0
-  const active = LEVELS[idx]
+export function CascadeMultiplierIndicator({ multiplier, winStepNumber, armed = true }) {
+  const activeIdx = armed ? LEVELS.findIndex((l) => l.value === multiplier) : -1
+  const idx = activeIdx >= 0 ? activeIdx : -1
+  const active = idx >= 0 ? LEVELS[idx] : null
 
   return (
     <div className="flex flex-col items-center justify-center w-full relative z-20 h-12">
       <div className="text-[10px] uppercase tracking-[0.22em] text-slate-300/90">
-        CASCADE MULT <span className="text-white">x{multiplier}</span>
+        CASCADE MULT {armed ? <span className="text-white">x{multiplier}</span> : <span className="text-slate-600">x—</span>}
         <span className="text-slate-500"> · </span>
         <span className="text-slate-300">STEP {winStepNumber}</span>
       </div>
@@ -39,7 +39,7 @@ export function CascadeMultiplierIndicator({ multiplier, winStepNumber }) {
                 'relative rounded-full px-2.5 py-1 text-[10px] tracking-[0.18em] uppercase font-black select-none',
                 'border',
                 isOn ? 'border-white/30 text-white' : 'border-slate-700 text-slate-500',
-                isActive ? `bg-gradient-to-r ${active.accent} cascade-mult-glow animate-cascade-mult-pop` : 'bg-slate-900/40',
+                isActive && active ? `bg-gradient-to-r ${active.accent} cascade-mult-glow animate-cascade-mult-pop` : 'bg-slate-900/40',
               ].join(' ')}
             >
               {l.label}
