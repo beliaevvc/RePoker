@@ -4,6 +4,13 @@
  * Назначение: визуализация множителя каскада (замена streak-орбов в режиме CASCADE).
  */
 
+import { useEffect, useRef, useState } from 'react'
+
+const WIN_FORMATTER = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
 const LEVELS = [
   { value: 1, label: '1×', accent: 'from-blue-500 to-indigo-600' },
   { value: 2, label: '2×', accent: 'from-purple-500 to-fuchsia-600' },
@@ -12,16 +19,90 @@ const LEVELS = [
 ]
 
 /**
- * @param {{ multiplier: number, winStepNumber: number, armed?: boolean }} props
+ * @param {{
+ *   multiplier: number,
+ *   winStepNumber: number,
+ *   armed?: boolean,
+ *   runningWin?: number,
+ *   showRunningWin?: boolean,
+ *   timeFactor?: number,
+ * }} props
  * @returns {JSX.Element}
  */
-export function CascadeMultiplierIndicator({ multiplier, winStepNumber, armed = true }) {
+export function CascadeMultiplierIndicator({
+  multiplier,
+  winStepNumber,
+  armed = true,
+  runningWin = 0,
+  showRunningWin = false,
+  timeFactor = 1,
+}) {
   const activeIdx = armed ? LEVELS.findIndex((l) => l.value === multiplier) : -1
   const idx = activeIdx >= 0 ? activeIdx : -1
   const active = idx >= 0 ? LEVELS[idx] : null
 
+  const [displayWin, setDisplayWin] = useState(() => Number(runningWin ?? 0))
+  const [winPopNonce, setWinPopNonce] = useState(0)
+  const rafRef = useRef(0)
+
+  useEffect(() => {
+    // Если строка WIN скрыта — синхронизируем значение без анимации (чтобы следующий показ стартовал корректно).
+    if (!showRunningWin) {
+      setDisplayWin(Number(runningWin ?? 0))
+      return
+    }
+
+    const reducedMotion = (() => {
+      try {
+        return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+      } catch {
+        return false
+      }
+    })()
+
+    const target = Number(runningWin ?? 0)
+    if (!Number.isFinite(target)) return
+
+    if (reducedMotion) {
+      setDisplayWin(target)
+      setWinPopNonce((n) => n + 1)
+      return
+    }
+
+    // count-up: от текущего displayWin к target
+    const from = Number(displayWin ?? 0)
+    if (!Number.isFinite(from)) {
+      setDisplayWin(target)
+      setWinPopNonce((n) => n + 1)
+      return
+    }
+
+    if (target === from) return
+
+    const durationMs = Math.max(80, Math.round(240 * Math.max(0.25, Number(timeFactor ?? 1))))
+    const start = performance.now()
+
+    // гарантируем, что CSS-анимация pop перезапустится
+    setWinPopNonce((n) => n + 1)
+
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / durationMs)
+      // easeOutQuad
+      const eased = t * (2 - t)
+      const v = from + (target - from) * eased
+      setDisplayWin(v)
+      if (t < 1) rafRef.current = requestAnimationFrame(tick)
+      else setDisplayWin(target)
+    }
+
+    cancelAnimationFrame(rafRef.current)
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- displayWin is the animation "from" value; we intentionally re-run only on target/visibility changes.
+  }, [runningWin, showRunningWin, timeFactor])
+
   return (
-    <div className="flex flex-col items-center justify-center w-full relative z-20 h-12">
+    <div className="flex flex-col items-center justify-start w-full relative z-20 h-[76px] pt-1">
       <div className="text-[10px] uppercase tracking-[0.22em] text-slate-300/90">
         CASCADE MULT {armed ? <span className="text-white">x{multiplier}</span> : <span className="text-slate-600">x—</span>}
         <span className="text-slate-500"> · </span>
@@ -46,6 +127,19 @@ export function CascadeMultiplierIndicator({ multiplier, winStepNumber, armed = 
             </div>
           )
         })}
+      </div>
+
+      {/* ВАЖНО: место под WIN всегда зарезервировано, чтобы при появлении ничего не “подпрыгивало”. */}
+      <div
+        className={[
+          'mt-3 h-5 text-[11px] uppercase tracking-[0.24em] text-slate-300/90 leading-none',
+          showRunningWin ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        ].join(' ')}
+      >
+          <span className="text-slate-400">WIN </span>
+        <span key={winPopNonce} className="text-white cascade-win-glow animate-cascade-win-pop text-[12px]">
+          {Number.isFinite(displayWin) ? WIN_FORMATTER.format(displayWin) : '0.00'}
+        </span>
       </div>
     </div>
   )

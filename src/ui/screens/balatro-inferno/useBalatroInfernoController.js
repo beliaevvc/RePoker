@@ -312,7 +312,6 @@ export function useBalatroInfernoController() {
 
   const clearCascadeActive = useCallback(() => {
     setCascadeStepIndex(0)
-    setCascadeRunningTotalWin(0)
     setCascadeWinStepNumber(0)
     setCascadeMultiplier(1)
     setCascadeVanishingIndices([])
@@ -332,6 +331,8 @@ export function useBalatroInfernoController() {
 
   const resetCascade = useCallback(() => {
     clearCascadeActive()
+    // UX: перед новой раздачей/новым каскадом всегда скрываем накопительный WIN
+    setCascadeRunningTotalWin(0)
     setLastCascadeTotalWin(0)
     setLastCascadeStepsCount(0)
     setLastWasJackpot(false)
@@ -535,6 +536,20 @@ export function useBalatroInfernoController() {
       dealIndex: dealIndexRef.current,
       winStepNumber,
     })
+    const jackpotAmount = step.jackpotAmount ?? 0
+    const stepTotalGain = step.winAmount + jackpotAmount
+
+    // Логический totalWin увеличиваем сразу при вычислении выигрышного шага (а не после refill-анимаций),
+    // чтобы UI мог показать “накопительный WIN” уже во время баннера шага.
+    if (step.didWin) {
+      cascadeTotalWinRef.current = cascadeTotalWinRef.current + stepTotalGain
+      if (jackpotAmount > 0) {
+        cascadeDidJackpotRef.current = true
+        cascadeJackpotAmountRef.current = cascadeJackpotAmountRef.current + jackpotAmount
+      }
+      cascadeLastWinResultRef.current = step.evalResult
+    }
+
     const stepLogPayload = {
       stepIndex: cascadeStepIndex,
       winStepNumber,
@@ -546,7 +561,7 @@ export function useBalatroInfernoController() {
       cascadeMultiplier: step.cascadeMultiplier,
       didDeckShortage: step.didDeckShortage,
       didJackpot: step.didJackpot,
-      jackpotAmount: step.jackpotAmount ?? 0,
+      jackpotAmount,
       deckLenBefore: deckRef.current.length,
       dealIndexBefore: dealIndexRef.current,
     }
@@ -563,7 +578,7 @@ export function useBalatroInfernoController() {
       cascadeMultiplier: step.cascadeMultiplier,
       didDeckShortage: step.didDeckShortage,
       didJackpot: step.didJackpot,
-      jackpotAmount: step.jackpotAmount,
+      jackpotAmount,
       dealIndexBefore: dealIndexRef.current,
       deckLenBefore: deckRef.current.length,
     }
@@ -633,6 +648,9 @@ export function useBalatroInfernoController() {
       setCascadeWinStepNumber(winStepNumber)
       setCascadeMultiplier(step.cascadeMultiplier)
       setCascadeHighlightIndices(winningIdx)
+      // UX: обновляем накопительный WIN в момент показа win-баннера шага (анимацию делает UI-компонент).
+      // Требование: показывать только после первого win → значение остаётся 0 до первого выигрыша.
+      setCascadeRunningTotalWin(cascadeTotalWinRef.current)
     }, 60)
 
     // 2) Hide banner
@@ -680,12 +698,6 @@ export function useBalatroInfernoController() {
       // важно: обновляем refs сразу, чтобы следующий шаг считался по актуальным данным
       deckRef.current = step.deckAfter
       dealIndexRef.current = step.dealIndexAfter
-      cascadeTotalWinRef.current = cascadeTotalWinRef.current + step.winAmount + (step.jackpotAmount ?? 0)
-      if ((step.jackpotAmount ?? 0) > 0) {
-        cascadeDidJackpotRef.current = true
-        cascadeJackpotAmountRef.current = cascadeJackpotAmountRef.current + (step.jackpotAmount ?? 0)
-      }
-      cascadeLastWinResultRef.current = step.evalResult
       cascadeLogicalHandRef.current = step.handAfter
 
       setDebugLastWinSnapshot({
@@ -694,14 +706,13 @@ export function useBalatroInfernoController() {
         eval: step.evalResult?.name ?? null,
         winIdx: step.winningIndices ?? [],
         winAmount: step.winAmount,
-        jackpotAmount: step.jackpotAmount ?? 0,
+        jackpotAmount,
         totalWinAfter: cascadeTotalWinRef.current,
         handAfter: step.handAfter.map((c) => `${c?.rank ?? '?'}:${c?.suit ?? '?'}`),
       })
 
       setDeck(step.deckAfter)
       setDealIndex(step.dealIndexAfter)
-      setCascadeRunningTotalWin(cascadeTotalWinRef.current)
     }, appearStart + sortedIdx.length * appearDelay + 40)
 
     // 6.5) Яркий “refill flash” (все карты без затемнения, но с заметным акцентом появления)
@@ -793,6 +804,7 @@ export function useBalatroInfernoController() {
     setLastJackpotAmount(0)
     setLastCascadeTotalWin(0)
     setLastCascadeStepsCount(0)
+    setCascadeRunningTotalWin(0)
     setShowWinBanner(false)
     setWinBannerAmount(0)
     setResult(null)

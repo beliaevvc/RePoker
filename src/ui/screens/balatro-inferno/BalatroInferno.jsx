@@ -83,6 +83,7 @@ export default function BalatroInferno() {
     cascadeAppearingIndices,
     cascadeHighlightIndices,
     cascadeRefillFlash,
+    cascadeRunningTotalWin,
     cascadeWinStepNumber,
     cascadeMultiplier,
     showWinBanner,
@@ -138,6 +139,10 @@ export default function BalatroInferno() {
     (gameState === 'cascading' && showWinBanner && (result?.multiplier ?? 0) > 0)
   const stepWinAmount = gameState === 'cascading' ? winBannerAmount : result ? bet * result.multiplier : 0
   const cascadeShowDimming = gameState === 'cascading' && showWinBanner && (result?.name ?? '') !== 'High Card'
+  const cascadeWinValue = gameState === 'result' ? lastCascadeTotalWin : cascadeRunningTotalWin
+  const showCascadeRunningWin =
+    mode === 'cascade' &&
+    ((gameState === 'cascading' && cascadeRunningTotalWin > 0) || (gameState === 'result' && lastCascadeTotalWin > 0))
 
   const cascadeMultIndicator = useMemo(() => {
     if (mode !== 'cascade') return null
@@ -553,6 +558,9 @@ export default function BalatroInferno() {
                   multiplier={cascadeMultIndicator.multiplier}
                   winStepNumber={cascadeMultIndicator.winStepNumber}
                   armed={cascadeMultIndicator.armed}
+                  runningWin={cascadeWinValue}
+                  showRunningWin={showCascadeRunningWin}
+                  timeFactor={turboEnabled ? 0.5 : 1}
                 />
               ) : (
                 <div className="h-12" />
