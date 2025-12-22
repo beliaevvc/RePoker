@@ -301,7 +301,7 @@ export default function BalatroInferno() {
                     MAX WIN
                   </div>
                   <div className="text-5xl md:text-7xl xl:text-9xl text-gold-shimmer font-black mt-4 drop-shadow-[4px_4px_0_#000] tracking-widest">
-                    150,000X
+                    150.000<span className="text-[0.5em] leading-none">x</span>
                   </div>
                 </div>
               </div>
@@ -463,7 +463,7 @@ export default function BalatroInferno() {
               MAX WIN
             </div>
             <div className="text-5xl md:text-7xl xl:text-9xl text-gold-shimmer font-black mt-4 drop-shadow-[4px_4px_0_#000] tracking-widest">
-              150,000X
+              150.000<span className="text-[0.5em] leading-none">x</span>
             </div>
           </div>
         </div>

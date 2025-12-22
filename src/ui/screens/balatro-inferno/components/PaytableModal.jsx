@@ -10,6 +10,8 @@ import { formatMoneyFull } from '../moneyFormat'
 import { HAND_MULTIPLIERS } from '../../../../domain/hand-evaluator/constants'
 import { MiniCard } from './MiniCard'
 
+const DECK_CLEAR_MULTIPLIER = 150000
+
 // Порядок отображения комбинаций (от старшей к младшей)
 const ORDERED_COMBOS = [
   'Royal Flush',
@@ -150,6 +152,8 @@ export function PaytableModal({ open, bet, onAdjustBet, onClose }) {
 
   if (!open) return null
 
+  const deckClearPayout = bet * DECK_CLEAR_MULTIPLIER
+
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4">
       {/* Backdrop */}
@@ -181,6 +185,34 @@ export function PaytableModal({ open, bet, onAdjustBet, onClose }) {
 
         {/* Scrollable List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+          {/* Special payout (do NOT call it jackpot) */}
+          <div className="bg-slate-900/60 border border-amber-600/40 rounded-lg p-3 flex flex-col gap-2 relative overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_10%,rgba(250,204,21,0.14),transparent_55%),radial-gradient(circle_at_80%_90%,rgba(255,215,0,0.10),transparent_60%)]" />
+
+            <div className="relative flex flex-col items-center text-center gap-2">
+              <div className="text-xs sm:text-sm font-extrabold text-amber-200 uppercase tracking-wide">
+                DECK CLEAR
+              </div>
+
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  className="text-[clamp(18px,3.4vw,30px)] font-black text-gold-shimmer tracking-tighter leading-none transform -skew-x-12 drop-shadow-[2px_2px_0_rgba(0,0,0,1)]"
+                  aria-label="150.000x"
+                >
+                  150.000<span className="text-[0.5em] leading-none">x</span>
+                </div>
+                <div className="text-xs sm:text-sm text-emerald-400 font-bold tracking-wider">
+                  {formatMoneyFull(deckClearPayout)}
+                </div>
+              </div>
+
+              <div className="mt-1 text-[10px] sm:text-[11px] text-slate-300 leading-snug max-w-[44ch]">
+                If you clear the entire 54-card deck in a single cascade (no cards on the table, no cards left in the deck), you
+                get <span className="text-amber-200 font-bold tracking-widest uppercase">MAX WIN</span>.
+              </div>
+            </div>
+          </div>
+
           {ORDERED_COMBOS.map((comboName) => {
             const multiplier = HAND_MULTIPLIERS[comboName] ?? 0
             const payout = bet * multiplier

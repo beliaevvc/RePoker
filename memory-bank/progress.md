@@ -98,4 +98,7 @@
 - Гейты (после обновления колоды): `npm run test`, `npm run lint`, `npm run build` — пройдены.
 - Завершено: UI — **Paytable Modal** (таблица выплат) с миниатюрами карт и изменением ставки.
 - Архив: `memory-bank/archive/archive-2025-12-23-paytable.md`
+- Завершено: UI — Paytable: добавлен блок **DECK CLEAR** (без слова “jackpot”) с условием полной очистки 54‑картной колоды за 1 каскад и выплатой **150.000x**; унифицирован формат **150.000x** в MAX WIN оверлеях.
+- Гейты: `npm run build` — ✅
+- Архив: `memory-bank/archive/archive-2025-12-23-deck-clear-paytable.md`
 - Дальше: `/van` для следующей задачи.
