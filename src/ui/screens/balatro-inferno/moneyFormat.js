@@ -42,7 +42,10 @@ export function formatMoneyAdaptive(n, { compactFrom = 1_000_000, maxFullLength 
 
   const full = formatMoneyFull(v)
   if (Math.abs(v) >= compactFrom) return formatMoneyCompact(v)
-  if (full.length > maxFullLength) return formatMoneyCompact(v)
+  // `maxFullLength` — это максимально допустимая длина full-строки.
+  // На некоторых ширинах/шрифтах "пограничные" значения (ровно в лимит)
+  // всё равно не помещаются визуально, поэтому используем `>=`.
+  if (full.length >= maxFullLength) return formatMoneyCompact(v)
   return full
 }
 

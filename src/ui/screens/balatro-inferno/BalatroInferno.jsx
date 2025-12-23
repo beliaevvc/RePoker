@@ -9,7 +9,7 @@
 
 import { Play, RotateCcw } from 'lucide-react'
 import '../../../balatroInferno.css'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { TIER_COLORS } from './constants'
 import { useBalatroInfernoController } from './useBalatroInfernoController'
@@ -23,7 +23,7 @@ import { PaytableModal } from './components/PaytableModal'
 import { PixelMoneyIcon } from './components/PixelIcons'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 import { getCascadeMultiplierForWinStep } from '../../../application/game/cascadeMultiplier'
-import { formatMoneyAdaptive, formatMoneyFull } from './moneyFormat'
+import { formatMoneyAdaptive, formatMoneyCompact, formatMoneyFull } from './moneyFormat'
 
 /**
  * Feature flags (UI)
@@ -276,8 +276,59 @@ export default function BalatroInferno() {
     }
   }, [mode, gameState, showStepWinBanner, cascadeWinStepNumber, cascadeMultiplier, cascadeWinHistory, lastCascadeWinHistory])
 
-  const chipsDisplay = isMobileViewport ? formatMoneyAdaptive(balance, { maxFullLength: 10, compactFrom: 100_000 }) : formatMoneyAdaptive(balance)
-  const chipsTitle = formatMoneyFull(balance)
+  const chipsFull = useMemo(() => formatMoneyFull(balance), [balance])
+  const chipsAdaptive = useMemo(
+    () => (isMobileViewport ? formatMoneyAdaptive(balance, { maxFullLength: 10, compactFrom: 100_000 }) : formatMoneyAdaptive(balance)),
+    [balance, isMobileViewport],
+  )
+  const chipsCompact = useMemo(() => formatMoneyCompact(balance), [balance])
+  const [chipsForceCompact, setChipsForceCompact] = useState(false)
+  const chipsTextRef = useRef(null)
+  const chipsCanvasRef = useRef(null)
+
+  // Если значение/брейкпоинт изменился — пересчитаем заново (включая “разжаться” на более широком экране).
+  useEffect(() => {
+    setChipsForceCompact(false)
+  }, [balance, isMobileViewport])
+
+  const recomputeChipsOverflow = useCallback(() => {
+    const el = chipsTextRef.current
+    if (!el) return
+
+    const available = el.clientWidth
+    if (!available) return
+
+    // Measure the full string width without adding any extra DOM nodes.
+    // This avoids rare GPU/text repaint artifacts when hidden nodes overlap the text layer.
+    const style = window.getComputedStyle(el)
+    if (!style) return
+
+    const canvas = chipsCanvasRef.current || (chipsCanvasRef.current = document.createElement('canvas'))
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.font = style.font
+
+    const needed = ctx.measureText(chipsFull).width
+    const overflow = needed > available + 1
+    if (overflow !== chipsForceCompact) setChipsForceCompact(overflow)
+  }, [chipsForceCompact, chipsFull])
+
+  // Реальный overflow-check: если full не помещается в UI — форсим compact.
+  useLayoutEffect(() => {
+    recomputeChipsOverflow()
+
+    const RO = window.ResizeObserver
+    if (!RO) return
+    const el = chipsTextRef.current
+    if (!el) return
+
+    const ro = new RO(() => recomputeChipsOverflow())
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [recomputeChipsOverflow, chipsFull])
+
+  const chipsDisplay = chipsForceCompact ? chipsCompact : chipsAdaptive
+  const chipsTitle = chipsFull
   const betDisplay = formatMoneyFull(bet)
   const canStartAuto = balance >= bet
 
@@ -511,11 +562,16 @@ export default function BalatroInferno() {
             <div className="text-[10px] text-blue-300 uppercase tracking-[0.2em] sm:tracking-widest skew-x-[10deg]">
               CHIPS
             </div>
-            <div
-              className="text-[clamp(14px,4.2vw,32px)] sm:text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] truncate max-w-full"
-              title={chipsTitle}
-            >
-              {chipsDisplay}
+            {/* Сумму поднимаем выше CRT overlay (z=100), чтобы scanlines/RGB не давали артефакты на пиксельном тексте.
+                Дополнительно: transform-gpu + will-change стабилизируют перерисовку текста на некоторых браузерах при частых обновлениях. */}
+            <div className="relative z-[150] transform-gpu will-change-transform text-[clamp(14px,4.2vw,32px)] sm:text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] max-w-full">
+              <div
+                ref={chipsTextRef}
+                className={[chipsForceCompact ? 'whitespace-nowrap' : 'truncate', 'max-w-full'].join(' ')}
+                title={chipsTitle}
+              >
+                {chipsDisplay}
+              </div>
             </div>
           </div>
 
@@ -531,7 +587,8 @@ export default function BalatroInferno() {
             <div className="text-[10px] text-red-300 uppercase tracking-[0.2em] sm:tracking-widest skew-x-[10deg] text-right">
               ANTE
             </div>
-            <div className="text-[clamp(14px,4.2vw,32px)] sm:text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] text-right truncate max-w-full">
+            {/* Аналогично: поднимаем выше CRT overlay и включаем transform-gpu для стабильной перерисовки текста */}
+            <div className="relative z-[150] transform-gpu will-change-transform text-[clamp(14px,4.2vw,32px)] sm:text-[clamp(18px,3.2vw,32px)] text-white skew-x-[10deg] text-right truncate max-w-full">
               {betDisplay}
             </div>
           </div>
@@ -729,6 +786,9 @@ export default function BalatroInferno() {
                     isVanishing={gameState === 'cascading' && cascadeVanishingIndices.includes(i)}
                     isAppearing={gameState === 'cascading' && cascadeAppearingIndices.includes(i)}
                     handTier={tier}
+                    // Easter Egg: интерактив в простое, когда карты “просто висят”
+                    // Это бывает как в `idle`, так и в `result` (после раздачи, пока игрок не нажал PLAY снова).
+                    isInteractable={(gameState === 'idle' || gameState === 'result') && !isBusy && !autoRunning}
                   />
                 </div>
               ))}

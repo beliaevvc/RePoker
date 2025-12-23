@@ -10,6 +10,7 @@
 import { Crown } from 'lucide-react'
 import { RANK_NAMES } from '../../../../domain/cards/constants'
 import { TIER_COLORS } from '../constants'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * Пиксельные иконки мастей/джокера.
@@ -176,18 +177,93 @@ function PixelFire({ tier }) {
  *   isVisible: boolean,
  *   isWinning: boolean,
  *   isGrayedOut: boolean,
- *   handTier: number
+ *   handTier: number,
+ *   isInteractable?: boolean
  * }} props
  * @returns {JSX.Element}
  */
-export function Card({ card, index, isVisible, isWinning, isGrayedOut, isVanishing = false, isAppearing = false, handTier }) {
-  // Важно: размер карты должен хорошо адаптироваться при любом ресайзе окна.
-  // Здесь задаём ширину через clamp и фиксируем пропорции через aspect-ratio.
-  // На мобилках делаем карту крупнее (в ряд она “влезает” за счёт перекрытия в контейнере),
-  // на sm+ возвращаем обычное поведение через grid.
+export function Card({
+  card,
+  index,
+  isVisible,
+  isWinning,
+  isGrayedOut,
+  isVanishing = false,
+  isAppearing = false,
+  handTier,
+  isInteractable = false,
+}) {
   const cardClass = 'aspect-[100/140] w-[clamp(78px,24vw,124px)] sm:w-[clamp(56px,16vw,200px)]'
   const isJoker = card?.suit === 'joker'
   const rot = stableRotationDeg(card, index)
+
+  const [clickCount, setClickCount] = useState(0)
+  const [animState, setAnimState] = useState('idle')
+  const clickTimerRef = useRef(null)
+  const lastPointerDownAtRef = useRef(0)
+
+  useEffect(() => {
+    if (!isInteractable) {
+      setClickCount(0)
+      setAnimState('idle')
+    }
+  }, [isInteractable, card])
+
+  const handleInteract = (e) => {
+    // pointerdown работает и для мыши, и для тача — на мобильных это надёжнее, чем onClick
+    e.stopPropagation()
+
+    // Если браузер вызывает и pointerdown и click — защищаемся от двойного инкремента.
+    if (e.type === 'click') {
+      if (Date.now() - lastPointerDownAtRef.current < 350) return
+    } else if (e.type === 'pointerdown') {
+      lastPointerDownAtRef.current = Date.now()
+    }
+
+    if (!isInteractable || isWinning || isGrayedOut || isVanishing || isAppearing) return
+    // Блокируем клики во время длинной анимации
+    if (animState.startsWith('hide-peek')) return
+
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+
+    const nextCount = clickCount + 1
+    // Reset after 2s of inactivity
+    clickTimerRef.current = setTimeout(() => {
+      setClickCount(0)
+      setAnimState('idle') // Also reset animation to idle
+    }, 2000)
+
+    // Update count immediately
+    setClickCount(nextCount)
+
+    if (nextCount === 1) {
+      setAnimState('shake-weak')
+      setTimeout(() => {
+        // Only reset if we haven't clicked again (this logic is simplified, 
+        // real-world might need a ref to track "latest animation")
+      setAnimState((prev) => (prev === 'shake-weak' ? 'idle' : prev))
+      }, 400)
+    } else if (nextCount === 2) {
+      setAnimState('shake-strong')
+      setTimeout(() => {
+        setAnimState((prev) => (prev === 'shake-strong' ? 'idle' : prev))
+      }, 500)
+    } else if (nextCount >= 3) {
+      // 0 -> hide right (index + 1)
+      // 4 -> hide left (index - 1)
+      // 1,2,3 -> random left or right
+      let direction = 'right'
+      if (index === 4) direction = 'left'
+      else if (index > 0 && index < 4) direction = Math.random() > 0.5 ? 'right' : 'left'
+
+      const animName = `hide-peek-${direction}`
+      setAnimState(animName)
+      setClickCount(0) // Reset sequence
+      
+      // Auto-reset after animation completes (2s)
+      setTimeout(() => setAnimState('idle'), 2000)
+    }
+  }
 
   if (!isVisible || !card) {
     return (
@@ -201,7 +277,16 @@ export function Card({ card, index, isVisible, isWinning, isGrayedOut, isVanishi
   }
 
   const winningAnim = isWinning ? 'animate-card-float z-20' : ''
-  const idleAnim = !isWinning && !isGrayedOut ? 'animate-card-idle' : ''
+  
+  let idleAnim = ''
+  if (!isWinning && !isGrayedOut) {
+    if (animState === 'shake-weak') idleAnim = 'animate-shake-weak'
+    else if (animState === 'shake-strong') idleAnim = 'animate-shake-strong'
+    else if (animState === 'hide-peek-right') idleAnim = 'animate-hide-peek-right'
+    else if (animState === 'hide-peek-left') idleAnim = 'animate-hide-peek-left'
+    else idleAnim = 'animate-card-idle'
+  }
+
   const grayStyle = isGrayedOut ? 'opacity-40 grayscale brightness-50 scale-95 blur-[0.5px]' : ''
   const vanishAnim = isVanishing ? 'animate-cascade-vanish' : ''
   const appearAnim = isAppearing ? 'animate-cascade-appear' : ''
@@ -210,19 +295,38 @@ export function Card({ card, index, isVisible, isWinning, isGrayedOut, isVanishi
     ? 'bg-gradient-to-br from-yellow-600 via-amber-500 to-yellow-700 shadow-[0_0_20px_#f59e0b]'
     : 'bg-[#e2e8f0]'
 
+  const interactionStyle = isInteractable 
+    ? 'cursor-pointer hover:-translate-y-2 hover:z-10 active:scale-95 transition-transform' 
+    : ''
+
+  // Упрощаем логику transform для надежности
+  // Если есть анимация (кроме idle) или vanish/appear - убираем inline transform
+  const shouldUseInlineTransform = 
+    !isVanishing && 
+    !isAppearing && 
+    animState === 'idle' && 
+    (isWinning || isGrayedOut || !isInteractable); // Если idle-анимация (isInteractable), то transform рулится CSS
+
+  const hideBehindClass = animState.startsWith('hide-peek') ? 'repoker-hide-behind' : ''
+
+  // Если isInteractable=true и animState=idle, то работает CSS animate-card-idle.
+  // CSS: .animate-card-idle:hover { animation-play-state: paused; transform: translateY(-10px) ... }
+  // Inline style transform: undefined.
+  // Значит CSS должен работать.
+
   return (
     <div
-      className={`relative ${cardClass} transition-all duration-200 ease-out ${grayStyle} ${winningAnim} ${idleAnim} ${vanishAnim} ${appearAnim}`}
+      onPointerDown={handleInteract}
+      // fallback (редко нужен, но пусть будет)
+      onClick={handleInteract}
+      className={`relative ${cardClass} ${hideBehindClass} transition-all duration-200 ease-out ${grayStyle} ${winningAnim} ${idleAnim} ${vanishAnim} ${appearAnim} ${interactionStyle}`}
       style={{
         '--rot': `${rot}deg`,
-        transitionDuration: 'calc(200ms * var(--repoker-time-factor, 1))',
+        transitionDuration: animState !== 'idle' ? '0ms' : 'calc(200ms * var(--repoker-time-factor, 1))',
         transitionDelay: isWinning ? '0ms' : `calc(${index * 40}ms * var(--repoker-time-factor, 1))`,
-        transform:
-          isVanishing || isAppearing
-            ? undefined
-            : isWinning
-              ? 'translateY(-25px) scale(1.15) rotate(0deg)'
-              : `rotate(${rot}deg)`,
+        transform: shouldUseInlineTransform
+          ? (isWinning ? 'translateY(-25px) scale(1.15) rotate(0deg)' : `rotate(${rot}deg)`)
+          : undefined
       }}
     >
       {isWinning && <PixelFire tier={handTier} />}
@@ -283,5 +387,4 @@ export function Card({ card, index, isVisible, isWinning, isGrayedOut, isVanishi
     </div>
   )
 }
-
 
