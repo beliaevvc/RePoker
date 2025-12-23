@@ -186,54 +186,33 @@ export default function BalatroInferno() {
     return () => mq.removeEventListener?.('change', apply)
   }, [])
 
-  /**
-   * Mobile landscape “fit-to-viewport” scale
-   * - Цель: на маленькой высоте (landscape) уменьшить сцену, чтобы всё помещалось без скролла.
-   * - Включаем только для touch-девайсов, чтобы не затронуть desktop.
-   */
-  const sceneRef = useRef(null)
-  const [landscapeFitEnabled, setLandscapeFitEnabled] = useState(false)
-  const [sceneScale, setSceneScale] = useState(1)
+  // Phone landscape guard:
+  // В вебе нельзя “запретить поворот”, но можно блокировать UI заглушкой,
+  // чтобы пользователь всегда играл в portrait.
+  const [isPhoneLandscape, setIsPhoneLandscape] = useState(false)
   useEffect(() => {
-    const mqLandscape = window.matchMedia?.('(orientation: landscape)')
-    const mqTouch = window.matchMedia?.('(hover: none) and (pointer: coarse)')
+    const mq = window.matchMedia?.(
+      '(orientation: landscape) and (hover: none) and (pointer: coarse) and (max-width: 980px) and (max-height: 520px)',
+    )
+    if (!mq) return
 
-    const compute = () => {
-      const isLandscape = Boolean(mqLandscape?.matches)
-      const isTouch = Boolean(mqTouch?.matches)
-
-      // iPhone landscape обычно 360–480px по высоте; берём чуть шире, чтобы покрыть разные модели.
-      const h = window.innerHeight || 0
-      const w = window.innerWidth || 0
-      const shouldEnable = isLandscape && isTouch && h > 0 && w > 0 && h <= 520
-
-      setLandscapeFitEnabled(shouldEnable)
-      if (!shouldEnable) {
-        setSceneScale(1)
-        return
-      }
-
-      // Надёжная эвристика: подгоняем масштаб от высоты viewport.
-      // (flex-сжатие и fixed-элементы часто не дают scrollHeight-оверфлоу, даже когда визуально всё “наезжает”.)
-      window.requestAnimationFrame(() => {
-        const targetH = 460 // “дизайн-референс” для комфортного mobile landscape
-        const byHeight = h / targetH
-        const next = Math.min(1, byHeight)
-        const clamped = Math.max(0.78, Math.min(1, next))
-        setSceneScale(Number.isFinite(clamped) ? clamped : 1)
-      })
-    }
-
-    compute()
-    window.addEventListener('resize', compute)
-    window.addEventListener('orientationchange', compute)
-    mqLandscape?.addEventListener?.('change', compute)
-    mqTouch?.addEventListener?.('change', compute)
+    const apply = () => setIsPhoneLandscape(Boolean(mq.matches))
+    apply()
+    mq.addEventListener?.('change', apply)
+    window.addEventListener('orientationchange', apply)
+    window.addEventListener('resize', apply)
     return () => {
-      window.removeEventListener('resize', compute)
-      window.removeEventListener('orientationchange', compute)
-      mqLandscape?.removeEventListener?.('change', compute)
-      mqTouch?.removeEventListener?.('change', compute)
+      mq.removeEventListener?.('change', apply)
+      window.removeEventListener('orientationchange', apply)
+      window.removeEventListener('resize', apply)
+    }
+  }, [])
+
+  const tryLockPortrait = useCallback(async () => {
+    try {
+      await window.screen?.orientation?.lock?.('portrait')
+    } catch {
+      // ignore — на iOS Safari обычно нельзя программно заблокировать ориентацию
     }
   }, [])
 
@@ -331,6 +310,31 @@ export default function BalatroInferno() {
         runMaxWinCinematic ? 'maxwin-cinematic' : '',
       ].join(' ')}
     >
+      {isPhoneLandscape && (
+        <div className="fixed inset-0 z-[5000] bg-black/85 backdrop-blur-sm flex items-center justify-center px-6">
+          <div className="w-full max-w-sm text-center bg-[#0b1220]/95 border-2 border-slate-600 rounded-2xl shadow-[12px_12px_0_rgba(0,0,0,0.8)] p-5">
+            <div className="text-xs uppercase tracking-[0.28em] text-slate-300">LANDSCAPE</div>
+            <div className="mt-2 text-xl font-black text-white tracking-wider">Поверни телефон</div>
+            <div className="mt-2 text-[11px] leading-snug text-slate-300">
+              Игра рассчитана на вертикальную ориентацию. В landscape всё будет ломаться.
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                onClick={tryLockPortrait}
+                className="w-full h-11 border-2 font-black tracking-[0.18em] uppercase text-[11px] bg-slate-800 text-slate-200 border-slate-600 shadow-[4px_4px_0_#000] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
+              >
+                LOCK PORTRAIT
+              </button>
+              <div className="text-[10px] text-slate-500">
+                (Не везде поддерживается — просто поверни телефон вертикально)
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="absolute inset-[-50%] animate-spin-slow origin-center z-0 pointer-events-none opacity-60">
         <div className="w-full h-full bg-[conic-gradient(from_0deg,#0f172a,#1e1b4b,#312e81,#0f172a)] blur-3xl" />
       </div>

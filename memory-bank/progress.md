@@ -10,6 +10,7 @@
 - [x] В landscape дополнительно ужаты два проблемных минимума под `landscapeFitEnabled`: нижний `margin-bottom` у блока с картами и `min-height` у сетки контролов.
 - [x] Добавлен CSS-хелпер `.repoker-landscape-fit` в `src/balatroInferno.css` (`transform-origin`, `will-change`).
 - [x] Проверено: `npm run build` проходит, `npm test` проходит.
+- [x] Добавлена заглушка для **phone landscape**: при `(orientation: landscape) and (hover:none) and (pointer:coarse) and (max-width:980px) and (max-height:520px)` игра блокируется оверлеем “Поверни телефон”.
 
 ## Что дальше
 - Дождаться валидации на устройстве. Если всё ещё “хаос” — собрать скрин + модель iPhone и точечно править (скорее всего, размеры карт/баннеров).
