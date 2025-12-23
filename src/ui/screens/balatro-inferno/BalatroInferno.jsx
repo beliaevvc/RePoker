@@ -594,6 +594,8 @@ export default function BalatroInferno() {
     }
   }, [])
   const mobilePerfMode = (perfOverride ?? (isMobileViewport && isCoarsePointer)) === true
+  const mobilePerfAnimating =
+    mobilePerfMode && (isBusy || gameState === 'cascading' || gameState === 'dealing' || gameState === 'suspense' || runMaxWinCinematic)
 
   // Phone landscape guard:
   // В вебе нельзя “запретить поворот”, но можно блокировать UI заглушкой,
@@ -871,6 +873,7 @@ export default function BalatroInferno() {
         'h-[100svh] bg-[#020617] font-press-start overflow-hidden select-none relative flex flex-col pb-safe',
         turboEnabled ? 'repoker-turbo' : '',
         mobilePerfMode ? 'repoker-perf-mobile' : '',
+        mobilePerfAnimating ? 'repoker-perf-anim' : '',
         runMaxWinCinematic ? 'maxwin-cinematic' : '',
       ].join(' ')}
     >

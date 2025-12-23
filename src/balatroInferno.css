@@ -36,6 +36,42 @@
   display: none;
 }
 
+/* Perf during animations (mobile): максимально снижаем GPU/paint именно во время каскадов/раздачи.
+   Цель — меньше нагрев и ровнее FPS, при этом в idle сохраняем стиль. */
+.repoker-perf-anim .animate-spin-slow,
+.repoker-perf-anim .animate-slow-spin-back,
+.repoker-perf-anim .animate-fire-rise,
+.repoker-perf-anim .animate-fire-wave {
+  animation: none !important;
+}
+
+.repoker-perf-anim .animate-cascade-vanish,
+.repoker-perf-anim .animate-cascade-appear {
+  filter: none !important;
+}
+
+.repoker-perf-anim .animate-cascade-refill-flash {
+  filter: brightness(1.2) saturate(1.1) !important; /* вместо drop-shadow */
+}
+
+.repoker-perf-anim .mix-blend-overlay,
+.repoker-perf-anim .mix-blend-screen {
+  mix-blend-mode: normal !important;
+}
+
+/* Tailwind blur utilities override (только во время анимаций, чтобы не греть GPU) */
+.repoker-perf-anim .blur-sm,
+.repoker-perf-anim .blur-xl,
+.repoker-perf-anim .blur-2xl,
+.repoker-perf-anim .blur-3xl {
+  filter: none !important;
+}
+
+/* Tailwind arbitrary blur class (safe selector for CSS minifier) */
+.repoker-perf-anim [class~="blur-[0.5px]"] {
+  filter: none !important;
+}
+
 /* subtle "pixel grid" overlay for small badges/icons */
 .pixel-grid-overlay {
   position: relative;
