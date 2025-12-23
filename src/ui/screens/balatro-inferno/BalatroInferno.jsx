@@ -20,9 +20,17 @@ import { DevToolsDrawer } from './components/DevToolsDrawer'
 import { AutoPlayModal } from './components/AutoPlayModal'
 import { CascadeHistoryModal } from './components/CascadeHistoryModal'
 import { PaytableModal } from './components/PaytableModal'
+import { PixelMoneyIcon } from './components/PixelIcons'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 import { getCascadeMultiplierForWinStep } from '../../../application/game/cascadeMultiplier'
 import { formatMoneyAdaptive, formatMoneyFull } from './moneyFormat'
+
+/**
+ * Feature flags (UI)
+ * - false: normal-режим скрыт, выбор режима убран, по умолчанию CASCADE
+ * - true: вернуть UI переключения normal/cascade (при этом нужно также включить normal в контроллере)
+ */
+const MODE_SWITCHER_UI_ENABLED = false
 
 function MaxWinPoster() {
   return (
@@ -392,67 +400,6 @@ export default function BalatroInferno() {
           </div>
         )}
 
-        {/* Переключатель режима (минимальный UI, без изменения механики normal) */}
-        <div className="w-full max-w-5xl px-3 sm:px-4 flex items-center justify-between gap-2 mb-2 sm:mb-3">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-300/90">
-            MODE: <span className="text-white">{mode === 'cascade' ? 'CASCADE' : 'NORMAL'}</span>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setPaytableModalOpen(true)}
-              className="mr-1 sm:mr-2 text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest border-b border-transparent hover:border-slate-400 transition-all"
-            >
-              PAYTABLE
-            </button>
-
-            <div className="inline-flex rounded-lg overflow-hidden border border-slate-700 bg-slate-900/50">
-            <button
-              type="button"
-              disabled={!canChangeMode}
-              onClick={() => setMode('normal')}
-              className={[
-                'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors',
-                mode === 'normal' ? 'bg-slate-200 text-slate-900' : 'text-slate-200 hover:bg-slate-800/60',
-                !canChangeMode ? 'opacity-50 cursor-not-allowed' : '',
-              ].join(' ')}
-            >
-              NORMAL
-            </button>
-            <button
-              type="button"
-              disabled={!canChangeMode}
-              onClick={() => setMode('cascade')}
-              className={[
-                'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors',
-                mode === 'cascade' ? 'bg-slate-200 text-slate-900' : 'text-slate-200 hover:bg-slate-800/60',
-                !canChangeMode ? 'opacity-50 cursor-not-allowed' : '',
-              ].join(' ')}
-            >
-              CASCADE
-            </button>
-            </div>
-
-            {showDevButton && (
-              <button
-                type="button"
-                onClick={() => setDevToolsOpen((v) => !v)}
-                className={[
-                  'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors rounded-lg border',
-                  devToolsOpen
-                    ? 'bg-violet-200 text-slate-900 border-violet-300'
-                    : 'text-slate-200 border-slate-700 bg-slate-900/50 hover:bg-slate-800/60',
-                ].join(' ')}
-                aria-pressed={devToolsOpen}
-                title={devToolsExplicit ? 'Dev Tools (explicitly enabled)' : 'Dev Tools'}
-              >
-                DEV
-              </button>
-            )}
-          </div>
-        </div>
-
         <div
           className={`absolute top-0 inset-x-0 z-[120] pointer-events-none flex flex-col items-center justify-center pt-8 md:pt-12 transition-all duration-300 ${
             tier === 7 ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
@@ -504,6 +451,112 @@ export default function BalatroInferno() {
             </div>
           </div>
         </div>
+
+        {/* Под плашками: PAYTABLE (под CHIPS) и /dev (под ANTE) */}
+        {MODE_SWITCHER_UI_ENABLED ? (
+          // Legacy UI (режимы) — на будущее
+          <div className="w-full max-w-5xl px-3 sm:px-4 flex items-center justify-between gap-2 mt-2 sm:mt-3">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-300/90">
+              MODE: <span className="text-white">{mode === 'cascade' ? 'CASCADE' : 'NORMAL'}</span>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setPaytableModalOpen(true)}
+                className="mr-1 sm:mr-2 text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest border-b border-transparent hover:border-slate-400 transition-all"
+              >
+                PAYTABLE
+              </button>
+
+              <div className="inline-flex rounded-lg overflow-hidden border border-slate-700 bg-slate-900/50">
+                <button
+                  type="button"
+                  disabled={!canChangeMode}
+                  onClick={() => setMode('normal')}
+                  className={[
+                    'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors',
+                    mode === 'normal' ? 'bg-slate-200 text-slate-900' : 'text-slate-200 hover:bg-slate-800/60',
+                    !canChangeMode ? 'opacity-50 cursor-not-allowed' : '',
+                  ].join(' ')}
+                >
+                  NORMAL
+                </button>
+                <button
+                  type="button"
+                  disabled={!canChangeMode}
+                  onClick={() => setMode('cascade')}
+                  className={[
+                    'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors',
+                    mode === 'cascade' ? 'bg-slate-200 text-slate-900' : 'text-slate-200 hover:bg-slate-800/60',
+                    !canChangeMode ? 'opacity-50 cursor-not-allowed' : '',
+                  ].join(' ')}
+                >
+                  CASCADE
+                </button>
+              </div>
+
+              {showDevButton && (
+                <button
+                  type="button"
+                  onClick={() => setDevToolsOpen((v) => !v)}
+                  className={[
+                    'px-3 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors rounded-lg border',
+                    devToolsOpen
+                      ? 'bg-violet-200 text-slate-900 border-violet-300'
+                      : 'text-slate-200 border-slate-700 bg-slate-900/50 hover:bg-slate-800/60',
+                  ].join(' ')}
+                  aria-pressed={devToolsOpen}
+                  title={devToolsExplicit ? 'Dev Tools (explicitly enabled)' : 'Dev Tools'}
+                >
+                  DEV
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="w-full max-w-5xl px-3 sm:px-4 grid grid-cols-2 sm:grid-cols-3 items-center mt-2 sm:mt-3">
+            <button
+              type="button"
+              onClick={() => setPaytableModalOpen(true)}
+              className={[
+                'justify-self-start inline-flex items-center gap-2 h-7',
+                'text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest',
+                'border-b border-transparent hover:border-slate-400 transition-all group',
+              ].join(' ')}
+            >
+              <span
+                className="text-xl leading-none filter grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-200"
+                aria-hidden="true"
+                role="img"
+              >
+                💵
+              </span>
+              <span className="leading-none mt-[4px]">PAYTABLE</span>
+            </button>
+
+            <div className="hidden sm:block" />
+
+            {showDevButton ? (
+              <button
+                type="button"
+                onClick={() => setDevToolsOpen((v) => !v)}
+                className={[
+                  'justify-self-end sm:col-start-3',
+                  'text-[10px] font-bold tracking-widest border-b transition-all',
+                  'border-transparent hover:border-slate-400',
+                  devToolsOpen ? 'text-violet-200' : 'text-slate-400 hover:text-white',
+                ].join(' ')}
+                aria-pressed={devToolsOpen}
+                title={devToolsExplicit ? 'Dev Tools (explicitly enabled)' : 'Dev Tools'}
+              >
+                /dev
+              </button>
+            ) : (
+              <div className="justify-self-end sm:col-start-3" />
+            )}
+          </div>
+        )}
 
         {/* Центр (карты/эффекты): без скролла. Всё должно умещаться в один экран. */}
         <div className="relative w-full flex flex-col items-center justify-center flex-1 min-h-0 gap-[clamp(10px,2.5vh,28px)]">

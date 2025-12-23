@@ -21,6 +21,24 @@
   box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
 }
 
+/* subtle "pixel grid" overlay for small badges/icons */
+.pixel-grid-overlay {
+  position: relative;
+}
+.pixel-grid-overlay::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.14) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.10) 1px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  border-radius: 4px;
+}
+
 /* Safe-area padding (iOS) */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);

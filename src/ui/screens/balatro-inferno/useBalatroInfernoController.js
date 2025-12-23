@@ -27,6 +27,16 @@ import { browserClock } from '../../../infrastructure/clock/browserClock'
 const GAME_MODE_STORAGE_KEY = 'repoker.gameMode'
 const DEVTOOLS_STORAGE_KEY = 'repoker.devTools'
 
+/**
+ * Feature flags (UI/режимы)
+ *
+ * Сейчас мы временно “отключаем” normal-режим: UI выбора режима убираем,
+ * а по умолчанию всегда работаем в CASCADE.
+ *
+ * Чтобы вернуть normal (и/или переключалку) — достаточно выставить `true`.
+ */
+const NORMAL_MODE_ENABLED = false
+
 function readDevToolsFlagFromStorage() {
   try {
     const v = window.localStorage.getItem(DEVTOOLS_STORAGE_KEY)
@@ -101,9 +111,10 @@ function formatComboSignature(evalResult, hand) {
 function readStoredGameMode() {
   try {
     const v = window.localStorage.getItem(GAME_MODE_STORAGE_KEY)
+    if (!NORMAL_MODE_ENABLED) return 'cascade'
     return v === 'cascade' ? 'cascade' : 'normal'
   } catch {
-    return 'normal'
+    return NORMAL_MODE_ENABLED ? 'normal' : 'cascade'
   }
 }
 
