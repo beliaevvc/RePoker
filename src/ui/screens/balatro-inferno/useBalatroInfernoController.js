@@ -21,8 +21,9 @@ import { applyCascadeStepUseCase } from '../../../application/game/usecases/appl
 import { buildJackpotSimulationScenario } from '../../../application/game/debug/jackpotSimulation'
 import { DEFAULT_ANTE } from '../../../application/game/constants/ante'
 
-import { nativeRng } from '../../../infrastructure/rng/nativeRng'
-import { browserClock } from '../../../infrastructure/clock/browserClock'
+import { getDefaultBalatroInfernoDeps } from './controllerDeps'
+import { createScheduler } from './scheduler'
+import { scheduleCardRefillTimeline } from './cascadeTimeline'
 
 const GAME_MODE_STORAGE_KEY = 'repoker.gameMode'
 const DEVTOOLS_STORAGE_KEY = 'repoker.devTools'
@@ -37,32 +38,32 @@ const DEVTOOLS_STORAGE_KEY = 'repoker.devTools'
  */
 const NORMAL_MODE_ENABLED = false
 
-function readDevToolsFlagFromStorage() {
+function readDevToolsFlagFromStorage(storage) {
   try {
-    const v = window.localStorage.getItem(DEVTOOLS_STORAGE_KEY)
+    const v = storage?.getItem?.(DEVTOOLS_STORAGE_KEY)
     return v === '1' || v === 'true' || v === 'on'
   } catch {
     return false
   }
 }
 
-function readDevToolsFlagFromQuery() {
+function readDevToolsFlagFromQuery(locationSearch) {
   try {
-    const params = new URLSearchParams(window.location.search)
+    const params = new URLSearchParams(locationSearch || '')
     return params.get('dev') === '1' || params.get('devtools') === '1'
   } catch {
     return false
   }
 }
 
-function isDevToolsAllowed() {
+function isDevToolsAllowed({ storage, locationSearch }) {
   // dev build always allowed; prod allowed only when explicitly enabled
-  const explicit = readDevToolsFlagFromStorage() || readDevToolsFlagFromQuery()
+  const explicit = readDevToolsFlagFromStorage(storage) || readDevToolsFlagFromQuery(locationSearch)
   return Boolean(import.meta?.env?.DEV) || explicit
 }
 
-function isDevToolsExplicitlyEnabled() {
-  return readDevToolsFlagFromStorage() || readDevToolsFlagFromQuery()
+function isDevToolsExplicitlyEnabled({ storage, locationSearch }) {
+  return readDevToolsFlagFromStorage(storage) || readDevToolsFlagFromQuery(locationSearch)
 }
 
 function cardRankLabelForLog(card) {
@@ -108,9 +109,9 @@ function formatComboSignature(evalResult, hand) {
   return parts.join('')
 }
 
-function readStoredGameMode() {
+function readStoredGameMode(storage) {
   try {
-    const v = window.localStorage.getItem(GAME_MODE_STORAGE_KEY)
+    const v = storage?.getItem?.(GAME_MODE_STORAGE_KEY)
     if (!NORMAL_MODE_ENABLED) return 'cascade'
     return v === 'cascade' ? 'cascade' : 'normal'
   } catch {
@@ -118,12 +119,59 @@ function readStoredGameMode() {
   }
 }
 
-function writeStoredGameMode(mode) {
+function writeStoredGameMode(storage, mode) {
   try {
-    window.localStorage.setItem(GAME_MODE_STORAGE_KEY, mode)
+    storage?.setItem?.(GAME_MODE_STORAGE_KEY, mode)
   } catch {
     // ignore (private mode / blocked storage)
   }
+}
+
+/**
+ * @typedef {{
+ *   rng?: { randomFloat: () => number },
+ *   clock?: { setTimeout: (fn: () => void, ms: number) => any, clearTimeout: (h: any) => void },
+ *   storage?: { getItem: (k: string) => string | null, setItem: (k: string, v: string) => void },
+ *   location?: { search?: string, reload?: () => void },
+ * }} BalatroInfernoDeps
+ */
+
+/**
+ * @param {BalatroInfernoDeps | undefined} deps
+ */
+function resolveDeps(deps) {
+  const defaults = getDefaultBalatroInfernoDeps()
+
+  const rng =
+    deps?.rng && typeof deps.rng.randomFloat === 'function'
+      ? deps.rng
+      : defaults?.rng && typeof defaults.rng.randomFloat === 'function'
+        ? defaults.rng
+        : {
+            randomFloat() {
+              return Math.random()
+            },
+          }
+
+  const clock =
+    deps?.clock && typeof deps.clock.setTimeout === 'function' && typeof deps.clock.clearTimeout === 'function'
+      ? deps.clock
+      : defaults?.clock && typeof defaults.clock.setTimeout === 'function' && typeof defaults.clock.clearTimeout === 'function'
+        ? defaults.clock
+        : {
+            setTimeout(fn, ms) {
+              return globalThis.setTimeout(fn, ms)
+            },
+            clearTimeout(handle) {
+              globalThis.clearTimeout(handle)
+            },
+          }
+
+  const storage = deps?.storage ?? defaults?.storage ?? null
+  const location = deps?.location ?? defaults?.location ?? null
+  const locationSearch = (location && typeof location.search === 'string' ? location.search : '') || ''
+
+  return { rng, clock, storage, location, locationSearch }
 }
 
 /**
@@ -154,16 +202,19 @@ function writeStoredGameMode(mode) {
  *   forceHand: (jokerCount: number) => void,
  * }}
  */
-export function useBalatroInfernoController() {
+export function useBalatroInfernoController(deps) {
+  const resolved = useMemo(() => resolveDeps(deps), [deps])
+  const { rng, clock, storage, location, locationSearch } = resolved
+
   const [balance, setBalance] = useState(100)
   const [bet, setBet] = useState(DEFAULT_ANTE)
   const [streak, setStreak] = useState(0)
-  const [mode, _setMode] = useState(() => readStoredGameMode())
+  const [mode, _setMode] = useState(() => readStoredGameMode(storage))
   const [turboEnabled, setTurboEnabled] = useState(false)
   const [hand, setHand] = useState([])
   const [gameState, setGameState] = useState('idle')
   const [result, setResult] = useState(null)
-  const [deck, setDeck] = useState(() => createDeck(nativeRng))
+  const [deck, setDeck] = useState(() => createDeck(rng))
   const [dealIndex, setDealIndex] = useState(0)
 
   // AutoPlay (AUTO)
@@ -198,8 +249,14 @@ export function useBalatroInfernoController() {
   const [debugLastWinSnapshot, setDebugLastWinSnapshot] = useState(null)
 
   // Dev Tools
-  const devToolsAllowed = useMemo(() => isDevToolsAllowed(), [])
-  const devToolsExplicit = useMemo(() => isDevToolsExplicitlyEnabled(), [])
+  const devToolsAllowed = useMemo(
+    () => isDevToolsAllowed({ storage, locationSearch }),
+    [storage, locationSearch],
+  )
+  const devToolsExplicit = useMemo(
+    () => isDevToolsExplicitlyEnabled({ storage, locationSearch }),
+    [storage, locationSearch],
+  )
   const [devToolsOpen, setDevToolsOpen] = useState(false)
   const DEV_LOG_CAP = 400
   const [devLogPaused, setDevLogPaused] = useState(false)
@@ -231,16 +288,18 @@ export function useBalatroInfernoController() {
   const toggleDevLogPaused = useCallback(() => setDevLogPaused((v) => !v), [])
   const enableDevToolsExplicit = useCallback(() => {
     try {
-      window.localStorage.setItem(DEVTOOLS_STORAGE_KEY, '1')
+      storage?.setItem?.(DEVTOOLS_STORAGE_KEY, '1')
     } catch {
       // ignore
     }
     // Для простоты: после включения перезагружаем страницу, чтобы gating стал активен везде (включая hotkeys).
-    window.location.reload()
-  }, [])
+    location?.reload?.()
+  }, [storage, location])
 
   // Защита от “гонок” таймеров каскада: любой callback из старого шага игнорируется.
   const cascadeAnimTokenRef = useRef(0)
+  // Неформальный "phase" каскада (только для упорядочивания/отладки; UI не зависит).
+  const cascadePhaseRef = useRef('idle')
   // Логическое состояние каскада держим в refs (чтобы mid-step обновления не перезапускали useEffect)
   const cascadeLogicalHandRef = useRef(null)
   const cascadeTotalWinRef = useRef(0)
@@ -267,8 +326,8 @@ export function useBalatroInfernoController() {
   }, [dealIndex])
 
   useEffect(() => {
-    writeStoredGameMode(mode)
-  }, [mode])
+    writeStoredGameMode(storage, mode)
+  }, [storage, mode])
 
   const toggleTurbo = useCallback(() => {
     setTurboEnabled((v) => {
@@ -406,7 +465,7 @@ export function useBalatroInfernoController() {
 
   const startDealNow = useCallback(
     (via = 'manual') => {
-      const next = startDealUseCase({ balance, bet }, { rng: nativeRng })
+      const next = startDealUseCase({ balance, bet }, { rng })
       if (!next) return false
       pushDevLog('DEAL_START', { via, mode, bet, balanceBefore: balance })
       resetCascade()
@@ -476,18 +535,18 @@ export function useBalatroInfernoController() {
   useEffect(() => {
     if (gameState === 'dealing') {
       if (dealIndex < 5) {
-        const timer = browserClock.setTimeout(() => {
+        const timer = clock.setTimeout(() => {
           setHand((prev) => [...prev, deck[dealIndex]])
           setDealIndex((prev) => prev + 1)
         }, turboEnabled ? 20 : 40)
-        return () => browserClock.clearTimeout(timer)
+        return () => clock.clearTimeout(timer)
       }
-      const timer = browserClock.setTimeout(() => setGameState('suspense'), 0)
-      return () => browserClock.clearTimeout(timer)
+      const timer = clock.setTimeout(() => setGameState('suspense'), 0)
+      return () => clock.clearTimeout(timer)
     }
 
     if (gameState === 'suspense') {
-      const timer = browserClock.setTimeout(() => {
+      const timer = clock.setTimeout(() => {
         if (mode === 'normal') {
           const evalResult = getBestHand(hand)
           const combo = formatComboSignature(evalResult, hand)
@@ -526,9 +585,9 @@ export function useBalatroInfernoController() {
         setCascadeStepIndex(0)
         setGameState('cascading')
       }, turboEnabled ? 150 : 300)
-      return () => browserClock.clearTimeout(timer)
+      return () => clock.clearTimeout(timer)
     }
-  }, [gameState, dealIndex, deck, hand, bet, balance, streak, mode, resetCascade, turboEnabled, pushDevLog])
+  }, [gameState, dealIndex, deck, hand, bet, balance, streak, mode, resetCascade, turboEnabled, pushDevLog, clock])
 
   useEffect(() => {
     if (gameState !== 'cascading') return
@@ -538,17 +597,15 @@ export function useBalatroInfernoController() {
     const logicalHand = cascadeLogicalHandRef.current
     if (!logicalHand) return
 
-    const timers = []
     const timeFactor = turboEnabled ? 0.5 : 1
     const scaleMs = (ms) => (ms <= 0 ? 0 : Math.max(0, Math.round(ms * timeFactor)))
-    const schedule = (fn, ms) => {
-      const t = browserClock.setTimeout(() => {
-        if (cascadeAnimTokenRef.current !== token) return
-        fn()
-      }, scaleMs(ms))
-      timers.push(t)
-      return t
-    }
+    const scheduler = createScheduler({
+      clock,
+      tokenRef: cascadeAnimTokenRef,
+      token,
+      scaleMs,
+    })
+    const { schedule } = scheduler
 
     // Один шаг каскада считается от “логической” руки, а не от UI-анимаций.
     const winStepNumber = cascadeStepIndex + 1
@@ -630,8 +687,7 @@ export function useBalatroInfernoController() {
       const wasJackpot = cascadeDidJackpotRef.current
       const jackpotAmount = cascadeJackpotAmountRef.current
 
-      const finishTimer = browserClock.setTimeout(() => {
-        if (cascadeAnimTokenRef.current !== token) return
+      schedule(() => {
         if (totalWin > 0) setBalance((prev) => prev + totalWin)
 
         setLastCascadeTotalWin(totalWin)
@@ -667,22 +723,21 @@ export function useBalatroInfernoController() {
         })
       }, 0)
 
-      return () => {
-        browserClock.clearTimeout(finishTimer)
-        timers.forEach((t) => browserClock.clearTimeout(t))
-      }
+      return () => scheduler.clearAll()
     }
 
     const winningIdx = step.winningIndices ?? []
 
     // 1) Reveal (двухфазно): сначала обновляем руку, затем показываем баннер/подсветку.
     schedule(() => {
+      cascadePhaseRef.current = 'reveal'
       setHand(step.handBefore)
       setCascadeVanishingIndices([])
       setCascadeAppearingIndices([])
     }, 0)
 
     schedule(() => {
+      cascadePhaseRef.current = 'banner'
       setResult(step.evalResult)
       setShowWinBanner(true)
       setWinBannerAmount(step.winAmount)
@@ -698,7 +753,10 @@ export function useBalatroInfernoController() {
     schedule(() => setShowWinBanner(false), 520)
 
     // 3) Start vanish animation on winning cards
-    schedule(() => setCascadeVanishingIndices(winningIdx), 700)
+    schedule(() => {
+      cascadePhaseRef.current = 'vanish'
+      setCascadeVanishingIndices(winningIdx)
+    }, 700)
 
     // 3.5) Снять затемнение со “всех остальных” перед заменой (до появления новых карт)
     schedule(() => {
@@ -708,34 +766,35 @@ export function useBalatroInfernoController() {
 
     // 4) Remove cards (empty slots)
     schedule(() => {
+      cascadePhaseRef.current = 'empty'
       const emptied = step.handBefore.map((c, idx) => (winningIdx.includes(idx) ? null : c))
       setHand(emptied)
       setCascadeVanishingIndices([])
     }, 960)
 
-    // 5) Drop-in new cards (one-by-one)
-    const appearStart = 1080
-    const appearDelay = 120
-    const appearHold = 260
-    const sortedIdx = [...winningIdx].slice().sort((a, b) => a - b)
-    for (let k = 0; k < sortedIdx.length; k += 1) {
-      const idx = sortedIdx[k]
-      schedule(() => {
+    // 5) Drop-in new cards (one-by-one) + 6.5 flash
+    cascadePhaseRef.current = 'refill'
+    const refill = scheduleCardRefillTimeline({
+      schedule,
+      winningIndices: winningIdx,
+      onAppear: (idx) => {
         setHand((prev) => {
           const next = prev.slice()
           next[idx] = step.handAfter[idx]
           return next
         })
         setCascadeAppearingIndices((prev) => (prev.includes(idx) ? prev : [...prev, idx]))
-      }, appearStart + k * appearDelay)
-
-      schedule(() => {
+      },
+      onAppearEnd: (idx) => {
         setCascadeAppearingIndices((prev) => prev.filter((x) => x !== idx))
-      }, appearStart + k * appearDelay + appearHold)
-    }
+      },
+      onFlashOn: () => setCascadeRefillFlash(true),
+      onFlashOff: () => setCascadeRefillFlash(false),
+    })
 
     // 6) Commit deck/dealIndex and running total (визуально после refill)
     schedule(() => {
+      cascadePhaseRef.current = 'commit'
       // важно: обновляем refs сразу, чтобы следующий шаг считался по актуальным данным
       deckRef.current = step.deckAfter
       dealIndexRef.current = step.dealIndexAfter
@@ -744,6 +803,7 @@ export function useBalatroInfernoController() {
       setDebugLastWinSnapshot({
         token,
         stepIndex: cascadeStepIndex,
+        phase: cascadePhaseRef.current,
         eval: step.evalResult?.name ?? null,
         winIdx: step.winningIndices ?? [],
         winAmount: step.winAmount,
@@ -754,15 +814,12 @@ export function useBalatroInfernoController() {
 
       setDeck(step.deckAfter)
       setDealIndex(step.dealIndexAfter)
-    }, appearStart + sortedIdx.length * appearDelay + 40)
-
-    // 6.5) Яркий “refill flash” (все карты без затемнения, но с заметным акцентом появления)
-    schedule(() => setCascadeRefillFlash(true), appearStart + sortedIdx.length * appearDelay + 80)
-    schedule(() => setCascadeRefillFlash(false), appearStart + sortedIdx.length * appearDelay + 260)
+    }, refill.commitAt)
 
     // 7) Next step (или завершение каскада при нехватке карт в колоде)
     if (step.didDeckShortage) {
       schedule(() => {
+        cascadePhaseRef.current = 'finish(deck-shortage)'
         const totalWin = cascadeTotalWinRef.current
         const lastWinResult = cascadeLastWinResultRef.current
         const wasJackpot = cascadeDidJackpotRef.current
@@ -793,12 +850,15 @@ export function useBalatroInfernoController() {
           wasJackpot,
           jackpotAmount,
         })
-      }, appearStart + sortedIdx.length * appearDelay + 520)
+      }, refill.endAt)
     } else {
-      schedule(() => setCascadeStepIndex((prev) => prev + 1), appearStart + sortedIdx.length * appearDelay + 520)
+      schedule(() => {
+        cascadePhaseRef.current = 'next'
+        setCascadeStepIndex((prev) => prev + 1)
+      }, refill.endAt)
     }
 
-    return () => timers.forEach((t) => browserClock.clearTimeout(t))
+    return () => scheduler.clearAll()
   }, [
     gameState,
     cascadeStepIndex,
@@ -827,7 +887,7 @@ export function useBalatroInfernoController() {
     // “как PLAY”: списываем ставку
     setBalance((prev) => prev - bet)
 
-    const scenarioIdx = Math.floor(nativeRng.randomFloat() * 5)
+    const scenarioIdx = Math.floor(rng.randomFloat() * 5)
     const scenario = buildJackpotSimulationScenario(scenarioIdx)
     pushDevLog('JACKPOT_SIM_SCENARIO', { scenarioIdx })
 

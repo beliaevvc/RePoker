@@ -32,8 +32,7 @@ npm run dev
 - **`src/ui/`**: React UI (экран, компоненты, контроллер‑хук).
 
 Точка входа экрана:
-- `src/BalatroInferno.jsx` — тонкий ре‑экспорт для совместимости.
-- `src/ui/screens/balatro-inferno/BalatroInferno.jsx` — основной UI‑экран.
+- `src/App.jsx` → `src/ui/screens/balatro-inferno/BalatroInferno.jsx` — основной UI‑экран.
 
 ## Тестирование
 
@@ -55,5 +54,6 @@ npm run test
 
 ## Документация по процессу
 
+- Документация проекта (архитектура/перфоманс/профилирование/флоу): `Docs/README.md`
 - Мастер‑план рефакторинга: `memory-bank/refactor-plan.md`
 - Текущий прогресс: `memory-bank/progress.md`

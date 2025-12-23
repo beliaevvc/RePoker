@@ -1,8 +1,8 @@
 # Progress (Memory Bank)
 
 ## Текущий статус
-- **Задача:** Архитектурный аудит RePoker (Clean Architecture) + план рефакторинга/оптимизаций (маленькими шагами, без поломок) + финальная документация.
-- **Этап:** В работе (PLAN). Браузер: Chrome → Safari; есть iPhone для проверки.
+- **Задача:** Архитектурный аудит RePoker (Clean Architecture) + рефакторинг/оптимизации (маленькими шагами, без поломок) + финальная документация.
+- **Этап:** Завершено и заархивировано. Браузер: Chrome → Safari; есть iPhone для проверки.
 
 ## Что сделано
 - [x] Зафиксирована задача и ограничения (прагматичная Clean Architecture, приоритет перфоманса, возможен поэтапный разрез монолита UI).
@@ -47,25 +47,22 @@
 - [x] Микро‑оптимизация стабильности пропсов: inline `onClick={() => ...}` в `HeaderBar`/`FooterControls` заменены на `useCallback`‑обработчики внутри этих `memo`‑компонентов. Цель: уменьшить “ложные” изменения пропсов и повысить шанс `Did not client render` в профайлере.
 - [x] Тех‑проверка: `npm run build` проходит после стабилизации обработчиков.
 - [x] Mobile perf mode (мягкий) + perf-anim (во время анимаций) — **ОТКАЧЕНО по просьбе пользователя** (вернули прежний визуал/поведение). Тех‑проверка: `npm run build` проходит.
+- [x] Архитектура/вход: `src/App.jsx` теперь импортирует экран напрямую из `src/ui/screens/balatro-inferno/BalatroInferno.jsx`; прокси‑файл `src/BalatroInferno.jsx` удалён (чтобы не было “двух истин” и путаницы). Тех‑проверка: `npm run build` проходит.
+- [x] Clean Architecture (DI, аккуратно): `useBalatroInfernoController` теперь получает зависимости через `deps` (rng/clock/storage/location) с дефолтами из нового `src/ui/screens/balatro-inferno/controllerDeps.js`. Убраны прямые ссылки на `nativeRng/browserClock` внутри контроллера — всё идёт через `rng/clock`. Цель: убрать прямую привязку контроллера к инфраструктуре и облегчить тестирование/замену зависимостей без изменения поведения. Тех‑проверка: `npm run build` проходит.
 - [x] Микро‑оптимизация ререндеров: `CascadeMultiplierIndicator` обёрнут в `React.memo`, inline‑колбэк `onOpenHistory={() => ...}` заменён на стабильный `useCallback` (`openHistoryModal`). Цель: уменьшить ререндеры индикатора/центральной сцены при несвязанных апдейтах.
+- [x] Аудит/док: добавлен документ `memory-bank/architecture-map.md` (слои, правила зависимостей, серые зоны, рекомендации).
+- [x] План/контроль: синхронизирован чеклист в `memory-bank/tasks.md` с фактически выполненными шагами (baseline, UI memo-разрез, DI storage/location).
+- [x] Test deps (детерминизм): добавлен `fakeClock` (`src/infrastructure/clock/fakeClock.ts`) и `createTestBalatroInfernoDeps()` (`src/ui/screens/balatro-inferno/testDeps.ts`: seeded RNG + fake clock + in-memory storage/location). Добавлены тесты Vitest; прогон: **30/30 passed** (запуск с `npm test -- --pool=threads --maxWorkers=1 ...` в sandbox).
+- [x] Рефакторинг (без изменения поведения): упорядочены каскадные таймеры в `useBalatroInfernoController.js` — введён единый `createScheduler()` поверх `deps.clock` (guard по `cascadeAnimTokenRef` + централизованный cleanup). Проверка: **Vitest 30/30 passed**, линтов нет.
+- [x] Рефакторинг (без изменения поведения): минимально структурирован cascade state — введён `cascadePhaseRef` (ref‑фазы, UI не зависит), вынесены утилиты `src/ui/screens/balatro-inferno/scheduler.js` и `src/ui/screens/balatro-inferno/cascadeTimeline.js` (refill‑таймлайн), добавлен регрессионный тест `cascadeTimeline.test.ts` на `fakeClock`. Проверка: **Vitest 32/32 passed**, `npm run build` ок.
 
 ## Известные проблемы / Риски
 - Риск перфоманса: большой экран `BalatroInferno.jsx` + много `setState` по таймерам → широкие ререндеры.
 - Риск мобилок: тяжёлые визуальные эффекты (blur/градиенты/оверлеи) могут давить GPU.
 
 ## Следующие шаги
-- **A1 (baseline, без изменений кода):** снять профили в Chrome и принести результаты.
-  - Chrome DevTools → **Performance**: Record 10–15s.
-    - Сценарий: 1) открыть страницу и подождать 2–3s, 2) нажать PLAY 2 раза, 3) дождаться каскада (если случится) или результата.
-    - Сохранить: `Save profile...` (или хотя бы скриншоты: Summary + Main thread flame chart, и FPS).
-    - Что выписать: кол-во **Long tasks**, пики **Recalculate Style/Layout**, дропы FPS.
-  - React DevTools → **Profiler**: Record, затем тот же сценарий (2 PLAY).
-    - Сохранить: `Export profile...` (или скриншоты “Ranked” топ‑компонентов).
-    - Что выписать: топ‑3 компонента по “self/total time”, и сколько commit’ов за сценарий.
-- **A2:** по результатам baseline зафиксировать hot-spots и выбрать самый безопасный следующий микро‑шаг (обычно: разрез `BalatroInferno.jsx` + `memo`).
-- **A1 (дособрать):** всё ещё нужен Chrome Performance trace (CSS/layout/FPS) для полной картины (особенно для мобилок).
-- **A1.1 (уточнение):** переснять Performance trace:
-  - в **Incognito** с выключенными расширениями (или отдельный Chrome profile без extensions),
-  - и/или в **production preview** (`npm run build && npm run preview`) — чтобы убрать `jsxDEV` и снизить шум профилировщика.
-  - ✅ Incognito/без extensions — получено (см. выше).
-  - ✅ Production preview server поднят: `http://127.0.0.1:5174/` (Vite preview).
+- Следующая задача — через `/van`.
+
+## Архив
+
+- `memory-bank/archive/archive-2025-12-23-refactor-docs.md`
