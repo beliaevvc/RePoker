@@ -432,17 +432,9 @@ export default function BalatroInferno() {
       />
 
       <div
-        ref={sceneRef}
         className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-[clamp(8px,2vh,24px)] ${effectiveShakeClass} ${
           runMaxWinCinematic ? 'maxwin-cinematic-shake' : ''
-        } ${landscapeFitEnabled ? 'repoker-landscape-fit' : ''}`}
-        style={
-          landscapeFitEnabled
-            ? {
-                transform: `scale(${sceneScale})`,
-              }
-            : undefined
-        }
+        }`}
       >
         {debugEnabled && (
           <div className="fixed right-3 top-3 z-[500] max-w-[min(520px,92vw)] bg-black/70 border border-slate-600 rounded p-3 text-[10px] text-slate-100 font-mono">
@@ -708,16 +700,7 @@ export default function BalatroInferno() {
             </div>
           </div>
 
-          <div
-            className="flex flex-col items-center gap-[clamp(10px,2vh,24px)] w-full mt-auto mb-[clamp(52px,7.5vh,130px)]"
-            style={
-              landscapeFitEnabled
-                ? {
-                    marginBottom: '18px',
-                  }
-                : undefined
-            }
-          >
+          <div className="flex flex-col items-center gap-[clamp(10px,2vh,24px)] w-full mt-auto mb-[clamp(52px,7.5vh,130px)]">
             <div className="w-full max-w-5xl px-2 sm:px-4">
               <div
                 className={[
@@ -779,16 +762,7 @@ export default function BalatroInferno() {
           <ResimpleLogo />
 
           {/* Контролы: слева TURBO/AUTO, по центру PLAY, справа +/- (симметрия, плотная компоновка) */}
-          <div
-            className="grid grid-cols-[clamp(64px,12vw,90px)_minmax(0,1fr)_clamp(64px,12vw,90px)] grid-rows-2 gap-1 sm:gap-2 w-full items-stretch min-h-[clamp(97px,12.6vh,126px)]"
-            style={
-              landscapeFitEnabled
-                ? {
-                    minHeight: '76px',
-                  }
-                : undefined
-            }
-          >
+          <div className="grid grid-cols-[clamp(64px,12vw,90px)_minmax(0,1fr)_clamp(64px,12vw,90px)] grid-rows-2 gap-1 sm:gap-2 w-full items-stretch min-h-[clamp(97px,12.6vh,126px)]">
             <button
               type="button"
               onClick={toggleTurbo}
