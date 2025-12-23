@@ -594,8 +594,6 @@ export default function BalatroInferno() {
     }
   }, [])
   const mobilePerfMode = (perfOverride ?? (isMobileViewport && isCoarsePointer)) === true
-  const mobilePerfAnimating =
-    mobilePerfMode && (isBusy || gameState === 'cascading' || gameState === 'dealing' || gameState === 'suspense' || runMaxWinCinematic)
 
   // Phone landscape guard:
   // В вебе нельзя “запретить поворот”, но можно блокировать UI заглушкой,
@@ -630,6 +628,13 @@ export default function BalatroInferno() {
   const canChangeMode = gameState === 'idle' || gameState === 'result'
   const showCascadeTotalBanner = mode === 'cascade' && gameState === 'result' && lastCascadeTotalWin > 0
   const runMaxWinCinematic = mode === 'cascade' && gameState === 'result' && showCascadeTotalBanner && lastWasJackpot
+  const mobilePerfAnimating =
+    mobilePerfMode &&
+    (isBusy ||
+      gameState === 'cascading' ||
+      gameState === 'dealing' ||
+      gameState === 'suspense' ||
+      runMaxWinCinematic)
   const effectiveShakeClass = runMaxWinCinematic ? '' : shakeClass
   const cascadeMaxMultiplier = lastCascadeStepsCount >= 4 ? 5 : Math.max(1, lastCascadeStepsCount || 1)
   const showStepWinBanner =
