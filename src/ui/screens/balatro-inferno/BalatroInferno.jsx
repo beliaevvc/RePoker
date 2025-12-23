@@ -9,7 +9,7 @@
 
 import { Play, RotateCcw } from 'lucide-react'
 import '../../../balatroInferno.css'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { TIER_COLORS } from './constants'
 import { useBalatroInfernoController } from './useBalatroInfernoController'
@@ -46,21 +46,51 @@ function MaxWinPoster() {
 }
 
 function ResimpleLogo() {
+  const BURST_MS = 150
+  const COOLDOWN_MS = 800
+
+  const [burst, setBurst] = useState(false)
+  const lastBurstAtRef = useRef(0)
+  const burstTimeoutRef = useRef(null)
+
+  const triggerBurst = useCallback(() => {
+    const now = Date.now()
+    if (now - lastBurstAtRef.current < COOLDOWN_MS) return
+    lastBurstAtRef.current = now
+
+    setBurst(true)
+    if (burstTimeoutRef.current) clearTimeout(burstTimeoutRef.current)
+    burstTimeoutRef.current = setTimeout(() => setBurst(false), BURST_MS)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (burstTimeoutRef.current) clearTimeout(burstTimeoutRef.current)
+    }
+  }, [])
+
   return (
-    <div className="relative group cursor-pointer w-full flex justify-center mt-[clamp(4px,1vh,8px)] mb-[clamp(4px,1vh,8px)]">
-      <div className="relative animate-logo-glitch max-w-full text-center">
+    <div
+      className={[
+        'relative group cursor-pointer w-full flex justify-center mt-[clamp(4px,1vh,8px)] mb-[clamp(4px,1vh,8px)]',
+        burst ? 'logo-burst' : '',
+      ].join(' ')}
+      onMouseEnter={triggerBurst}
+      onPointerDown={triggerBurst}
+    >
+      <div className="relative animate-logo-glitch-burst max-w-full text-center logo-inner">
         <span className="text-[clamp(18px,6vw,36px)] font-black tracking-[0.08em] sm:tracking-[0.1em] text-white/90 drop-shadow-[2px_2px_0_#000] select-none uppercase font-mono break-words">
           RESIMPLE <span className="font-bold tracking-[0.3em] opacity-80">GAMES</span>
         </span>
 
         <span
-          className="absolute top-0 left-[-2px] text-white/40 opacity-0 animate-glitch-text-1 mix-blend-overlay text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full"
+          className="absolute top-0 left-[-2px] logo-ghost logo-ghost-1 opacity-0 animate-glitch-text-1-burst mix-blend-screen text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full"
           aria-hidden="true"
         >
           RESIMPLE <span className="font-bold tracking-[0.3em]">GAMES</span>
         </span>
         <span
-          className="absolute top-0 left-[2px] text-gray-400/40 opacity-0 animate-glitch-text-2 mix-blend-overlay text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full"
+          className="absolute top-0 left-[2px] logo-ghost logo-ghost-2 opacity-0 animate-glitch-text-2-burst mix-blend-screen text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full"
           aria-hidden="true"
         >
           RESIMPLE <span className="font-bold tracking-[0.3em]">GAMES</span>
@@ -154,6 +184,57 @@ export default function BalatroInferno() {
     apply()
     mq.addEventListener?.('change', apply)
     return () => mq.removeEventListener?.('change', apply)
+  }, [])
+
+  /**
+   * Mobile landscape “fit-to-viewport” scale
+   * - Цель: на маленькой высоте (landscape) уменьшить сцену, чтобы всё помещалось без скролла.
+   * - Включаем только для touch-девайсов, чтобы не затронуть desktop.
+   */
+  const sceneRef = useRef(null)
+  const [landscapeFitEnabled, setLandscapeFitEnabled] = useState(false)
+  const [sceneScale, setSceneScale] = useState(1)
+  useEffect(() => {
+    const mqLandscape = window.matchMedia?.('(orientation: landscape)')
+    const mqTouch = window.matchMedia?.('(hover: none) and (pointer: coarse)')
+
+    const compute = () => {
+      const isLandscape = Boolean(mqLandscape?.matches)
+      const isTouch = Boolean(mqTouch?.matches)
+
+      // iPhone landscape обычно 360–480px по высоте; берём чуть шире, чтобы покрыть разные модели.
+      const h = window.innerHeight || 0
+      const w = window.innerWidth || 0
+      const shouldEnable = isLandscape && isTouch && h > 0 && w > 0 && h <= 520
+
+      setLandscapeFitEnabled(shouldEnable)
+      if (!shouldEnable) {
+        setSceneScale(1)
+        return
+      }
+
+      // Надёжная эвристика: подгоняем масштаб от высоты viewport.
+      // (flex-сжатие и fixed-элементы часто не дают scrollHeight-оверфлоу, даже когда визуально всё “наезжает”.)
+      window.requestAnimationFrame(() => {
+        const targetH = 460 // “дизайн-референс” для комфортного mobile landscape
+        const byHeight = h / targetH
+        const next = Math.min(1, byHeight)
+        const clamped = Math.max(0.78, Math.min(1, next))
+        setSceneScale(Number.isFinite(clamped) ? clamped : 1)
+      })
+    }
+
+    compute()
+    window.addEventListener('resize', compute)
+    window.addEventListener('orientationchange', compute)
+    mqLandscape?.addEventListener?.('change', compute)
+    mqTouch?.addEventListener?.('change', compute)
+    return () => {
+      window.removeEventListener('resize', compute)
+      window.removeEventListener('orientationchange', compute)
+      mqLandscape?.removeEventListener?.('change', compute)
+      mqTouch?.removeEventListener?.('change', compute)
+    }
   }, [])
 
   const canChangeMode = gameState === 'idle' || gameState === 'result'
@@ -347,9 +428,17 @@ export default function BalatroInferno() {
       />
 
       <div
+        ref={sceneRef}
         className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-[clamp(8px,2vh,24px)] ${effectiveShakeClass} ${
           runMaxWinCinematic ? 'maxwin-cinematic-shake' : ''
-        }`}
+        } ${landscapeFitEnabled ? 'repoker-landscape-fit' : ''}`}
+        style={
+          landscapeFitEnabled
+            ? {
+                transform: `scale(${sceneScale})`,
+              }
+            : undefined
+        }
       >
         {debugEnabled && (
           <div className="fixed right-3 top-3 z-[500] max-w-[min(520px,92vw)] bg-black/70 border border-slate-600 rounded p-3 text-[10px] text-slate-100 font-mono">
@@ -615,7 +704,16 @@ export default function BalatroInferno() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-[clamp(10px,2vh,24px)] w-full mt-auto mb-[clamp(52px,7.5vh,130px)]">
+          <div
+            className="flex flex-col items-center gap-[clamp(10px,2vh,24px)] w-full mt-auto mb-[clamp(52px,7.5vh,130px)]"
+            style={
+              landscapeFitEnabled
+                ? {
+                    marginBottom: '18px',
+                  }
+                : undefined
+            }
+          >
             <div className="w-full max-w-5xl px-2 sm:px-4">
               <div
                 className={[
@@ -677,7 +775,16 @@ export default function BalatroInferno() {
           <ResimpleLogo />
 
           {/* Контролы: слева TURBO/AUTO, по центру PLAY, справа +/- (симметрия, плотная компоновка) */}
-          <div className="grid grid-cols-[clamp(64px,12vw,90px)_minmax(0,1fr)_clamp(64px,12vw,90px)] grid-rows-2 gap-1 sm:gap-2 w-full items-stretch min-h-[clamp(97px,12.6vh,126px)]">
+          <div
+            className="grid grid-cols-[clamp(64px,12vw,90px)_minmax(0,1fr)_clamp(64px,12vw,90px)] grid-rows-2 gap-1 sm:gap-2 w-full items-stretch min-h-[clamp(97px,12.6vh,126px)]"
+            style={
+              landscapeFitEnabled
+                ? {
+                    minHeight: '76px',
+                  }
+                : undefined
+            }
+          >
             <button
               type="button"
               onClick={toggleTurbo}

@@ -44,6 +44,13 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Mobile landscape fit: масштабируем “сцену” целиком, чтобы всё умещалось по высоте.
+   Важно: включается только условно из JS, чтобы не ломать desktop/portrait. */
+.repoker-landscape-fit {
+  transform-origin: top center;
+  will-change: transform;
+}
+
 /* Turbo: ускоряем только “темповые” анимации через CSS-переменную.
    Важно: не трогаем shake/jitter/orbs/ореолы — они остаются декоративными. */
 .repoker-turbo {
@@ -504,6 +511,83 @@
   animation: logo-glitch 2s infinite steps(2);
 }
 
+/* LOGO: Rare auto-glitch (burst) + interactive burst class */
+@keyframes logo-glitch-burst {
+  0%,
+  86%,
+  100% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+  88% {
+    transform: translate(-1px, 1px);
+  }
+  89% {
+    transform: translate(2px, -1px);
+  }
+  90% {
+    transform: translate(-3px, 0px);
+    filter: contrast(1.05) saturate(1.08);
+  }
+  91% {
+    transform: translate(3px, 1px);
+  }
+  92% {
+    transform: translate(0px, -2px);
+  }
+  93% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+}
+.animate-logo-glitch-burst {
+  animation: logo-glitch-burst 2.6s infinite steps(1, end);
+  will-change: transform, filter;
+}
+
+@keyframes logo-glitch-hit {
+  0% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+  18% {
+    transform: translate(-3px, 1px);
+  }
+  36% {
+    transform: translate(3px, -1px);
+  }
+  54% {
+    transform: translate(-2px, 0px);
+    filter: contrast(1.08) saturate(1.12);
+  }
+  72% {
+    transform: translate(2px, 1px);
+  }
+  100% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+}
+
+.logo-ghost {
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity, clip-path, filter;
+}
+.logo-ghost-1 {
+  color: rgba(255, 60, 130, 0.45) !important; /* magenta-ish */
+}
+.logo-ghost-2 {
+  color: rgba(60, 200, 255, 0.45) !important; /* cyan-ish */
+}
+
+.logo-burst .logo-inner {
+  animation: logo-glitch-hit 150ms steps(1, end);
+}
+.logo-burst .logo-ghost {
+  opacity: 1 !important;
+}
+
 @keyframes glitch-text-1 {
   0% { clip-path: inset(40% 0 61% 0); opacity: 0; }
   20% { clip-path: inset(92% 0 1% 0); opacity: 1; transform: translate(-2px, 0); }
@@ -513,7 +597,7 @@
   100% { clip-path: inset(58% 0 43% 0); opacity: 1; }
 }
 .animate-glitch-text-1 {
-  animation: glitch-text-1 2.5s infinite linear alternate-reverse;
+  animation: glitch-text-1 0.3s infinite steps(1) alternate-reverse;
 }
 
 @keyframes glitch-text-2 {
@@ -525,7 +609,100 @@
   100% { clip-path: inset(4% 0 34% 0); opacity: 1; }
 }
 .animate-glitch-text-2 {
-  animation: glitch-text-2 2.5s infinite linear alternate-reverse;
+  animation: glitch-text-2 0.3s infinite steps(1) alternate-reverse;
+}
+
+/* Auto bursts: long hold, short glitch near the end */
+@keyframes glitch-text-1-burst {
+  0%,
+  86%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 0);
+    clip-path: inset(0 0 0 0);
+    filter: none;
+  }
+  88% {
+    opacity: 0.85;
+    transform: translate(-2px, 0);
+    clip-path: inset(40% 0 61% 0);
+  }
+  89% {
+    opacity: 0;
+  }
+  90% {
+    opacity: 0.75;
+    transform: translate(2px, 0);
+    clip-path: inset(92% 0 1% 0);
+    filter: contrast(1.1);
+  }
+  91% {
+    opacity: 0;
+  }
+  92% {
+    opacity: 0.65;
+    transform: translate(-1px, 0);
+    clip-path: inset(25% 0 58% 0);
+  }
+  93% {
+    opacity: 0;
+    filter: none;
+  }
+}
+.animate-glitch-text-1-burst {
+  animation: glitch-text-1-burst 2.6s infinite steps(1, end);
+}
+
+@keyframes glitch-text-2-burst {
+  0%,
+  86%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 0);
+    clip-path: inset(0 0 0 0);
+    filter: none;
+  }
+  88% {
+    opacity: 0.8;
+    transform: translate(2px, 0);
+    clip-path: inset(24% 0 29% 0);
+  }
+  89% {
+    opacity: 0;
+  }
+  90% {
+    opacity: 0.7;
+    transform: translate(-2px, 0);
+    clip-path: inset(67% 0 12% 0);
+    filter: contrast(1.1);
+  }
+  91% {
+    opacity: 0;
+  }
+  92% {
+    opacity: 0.6;
+    transform: translate(1px, 0);
+    clip-path: inset(18% 0 76% 0);
+  }
+  93% {
+    opacity: 0;
+    filter: none;
+  }
+}
+.animate-glitch-text-2-burst {
+  animation: glitch-text-2-burst 2.6s infinite steps(1, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-logo-glitch-burst,
+  .animate-glitch-text-1-burst,
+  .animate-glitch-text-2-burst,
+  .logo-burst .logo-inner {
+    animation: none !important;
+  }
+  .logo-ghost {
+    opacity: 0 !important;
+  }
 }
 
 /* Max Win Cinematic */
