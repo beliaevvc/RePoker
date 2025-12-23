@@ -573,28 +573,6 @@ export default function BalatroInferno() {
     return () => mq.removeEventListener?.('change', apply)
   }, [])
 
-  // Mobile perf mode (минимально влияет на визуал):
-  // - авто: включаем на телефонах (coarse pointer) при узком вьюпорте
-  // - override: ?perf=1 (включить), ?perf=0 (выключить)
-  const perfOverride = useMemo(() => {
-    try {
-      const v = new URLSearchParams(window.location.search).get('perf')
-      if (v === '1' || v === 'true' || v === 'on') return true
-      if (v === '0' || v === 'false' || v === 'off') return false
-      return null
-    } catch {
-      return null
-    }
-  }, [])
-  const isCoarsePointer = useMemo(() => {
-    try {
-      return Boolean(window.matchMedia?.('(hover: none) and (pointer: coarse)')?.matches)
-    } catch {
-      return false
-    }
-  }, [])
-  const mobilePerfMode = (perfOverride ?? (isMobileViewport && isCoarsePointer)) === true
-
   // Phone landscape guard:
   // В вебе нельзя “запретить поворот”, но можно блокировать UI заглушкой,
   // чтобы пользователь всегда играл в portrait.
@@ -628,13 +606,6 @@ export default function BalatroInferno() {
   const canChangeMode = gameState === 'idle' || gameState === 'result'
   const showCascadeTotalBanner = mode === 'cascade' && gameState === 'result' && lastCascadeTotalWin > 0
   const runMaxWinCinematic = mode === 'cascade' && gameState === 'result' && showCascadeTotalBanner && lastWasJackpot
-  const mobilePerfAnimating =
-    mobilePerfMode &&
-    (isBusy ||
-      gameState === 'cascading' ||
-      gameState === 'dealing' ||
-      gameState === 'suspense' ||
-      runMaxWinCinematic)
   const effectiveShakeClass = runMaxWinCinematic ? '' : shakeClass
   const cascadeMaxMultiplier = lastCascadeStepsCount >= 4 ? 5 : Math.max(1, lastCascadeStepsCount || 1)
   const showStepWinBanner =
@@ -877,8 +848,6 @@ export default function BalatroInferno() {
       className={[
         'h-[100svh] bg-[#020617] font-press-start overflow-hidden select-none relative flex flex-col pb-safe',
         turboEnabled ? 'repoker-turbo' : '',
-        mobilePerfMode ? 'repoker-perf-mobile' : '',
-        mobilePerfAnimating ? 'repoker-perf-anim' : '',
         runMaxWinCinematic ? 'maxwin-cinematic' : '',
       ].join(' ')}
     >
@@ -908,12 +877,7 @@ export default function BalatroInferno() {
       )}
 
       <div className="absolute inset-[-50%] animate-spin-slow origin-center z-0 pointer-events-none opacity-60">
-        <div
-          className={[
-            'w-full h-full bg-[conic-gradient(from_0deg,#0f172a,#1e1b4b,#312e81,#0f172a)]',
-            mobilePerfMode ? 'blur-2xl opacity-70' : 'blur-3xl',
-          ].join(' ')}
-        />
+        <div className="w-full h-full bg-[conic-gradient(from_0deg,#0f172a,#1e1b4b,#312e81,#0f172a)] blur-3xl" />
       </div>
       <div className="absolute inset-0 bg-[url('/textures/stardust.svg')] opacity-10 z-0" />
       <div className="fixed inset-0 z-[100] pointer-events-none crt-overlay" />
