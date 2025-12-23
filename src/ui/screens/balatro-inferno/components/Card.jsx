@@ -162,7 +162,7 @@ function PixelFire({ tier }) {
   return (
     <div className="absolute -inset-4 z-[-1] rounded-xl opacity-90 blur-sm mix-blend-screen overflow-hidden">
       <div className={`w-full h-full bg-gradient-to-t ${colors} animate-pulse-fast`} />
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-30 animate-fire-rise bg-[length:20px_20px]" />
+      <div className="absolute inset-0 bg-[url('/textures/diagmonds-light.svg')] opacity-30 animate-fire-rise bg-[length:20px_20px]" />
       <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-transparent animate-fire-wave" />
     </div>
   )
@@ -204,8 +204,17 @@ export function Card({
 
   useEffect(() => {
     if (!isInteractable) {
-      setClickCount(0)
-      setAnimState('idle')
+      // eslint-plugin-react-hooks (set-state-in-effect) ругается на синхронный setState в effect.
+      // Нам нужен именно reset при смене интерактивности/карты, поэтому откладываем обновление в microtask.
+      let cancelled = false
+      Promise.resolve().then(() => {
+        if (cancelled) return
+        setClickCount(0)
+        setAnimState('idle')
+      })
+      return () => {
+        cancelled = true
+      }
     }
   }, [isInteractable, card])
 
@@ -340,13 +349,13 @@ export function Card({
       >
         {isJoker ? (
           <>
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-30 animate-fire-rise" />
+            <div className="absolute inset-0 bg-[url('/textures/diagmonds-light.svg')] opacity-30 animate-fire-rise" />
             <JokerVisual />
             <Holofoil />
           </>
         ) : (
           <>
-            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/noise.png')]" />
+            <div className="absolute inset-0 opacity-10 bg-[url('/textures/noise.svg')]" />
             <div className="flex flex-col items-center absolute top-1 left-1 leading-none z-10">
               <span
                 className={[

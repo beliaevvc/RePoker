@@ -4,7 +4,7 @@
  * Назначение: визуализация множителя каскада (замена streak-орбов в режиме CASCADE).
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 
 const WIN_FORMATTER = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
@@ -32,7 +32,7 @@ const LEVELS = [
  * }} props
  * @returns {JSX.Element}
  */
-export function CascadeMultiplierIndicator({
+export const CascadeMultiplierIndicator = memo(function CascadeMultiplierIndicator({
   multiplier,
   winStepNumber,
   armed = true,
@@ -168,6 +168,6 @@ export function CascadeMultiplierIndicator({
       </div>
     </div>
   )
-}
+})
 
 

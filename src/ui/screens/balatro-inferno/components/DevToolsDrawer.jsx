@@ -1,5 +1,7 @@
-import { useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { formatMoneyFull } from '../moneyFormat'
+
+const EMPTY_ARRAY = []
 
 function formatTs(ts) {
   try {
@@ -134,7 +136,7 @@ async function copyToClipboard(text) {
  *  stateSnapshot: Record<string, any>,
  * }} props
  */
-export function DevToolsDrawer({
+export const DevToolsDrawer = memo(function DevToolsDrawer({
   open,
   variant,
   allowed = true,
@@ -153,16 +155,21 @@ export function DevToolsDrawer({
   const [copied, setCopied] = useState(false)
   const [copyError, setCopyError] = useState(false)
 
-  const logText = useMemo(() => {
-    return (devLogEntries ?? [])
-      .map((e) => `${formatTs(e.ts)} — ${formatLogMessage(e)}`)
-      .join('\n')
-  }, [devLogEntries])
+  const logCount = open ? (devLogEntries?.length ?? 0) : 0
+
+  const logEntriesNewestFirst = useMemo(() => {
+    if (!open) return EMPTY_ARRAY
+    const list = devLogEntries ?? EMPTY_ARRAY
+    // Render newest first
+    return list.length > 1 ? [...list].reverse() : list
+  }, [open, devLogEntries])
 
   const onCopy = useCallback(async () => {
     setCopied(false)
     setCopyError(false)
-    const ok = await copyToClipboard(logText)
+    // Собираем текст лога только по запросу (кнопка "Копия"), а не на каждый рендер.
+    const text = (devLogEntries ?? EMPTY_ARRAY).map((e) => `${formatTs(e.ts)} — ${formatLogMessage(e)}`).join('\n')
+    const ok = await copyToClipboard(text)
     if (ok) {
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1200)
@@ -170,7 +177,7 @@ export function DevToolsDrawer({
       setCopyError(true)
       window.setTimeout(() => setCopyError(false), 1600)
     }
-  }, [logText])
+  }, [devLogEntries])
 
   const panelBase =
     variant === 'sheet'
@@ -198,7 +205,9 @@ export function DevToolsDrawer({
         ].join(' ')}
         aria-hidden={!open}
       >
-        <div className="h-full flex flex-col">
+        {/* Когда панель закрыта — не рендерим тяжёлое содержимое (лог/списки), чтобы не тратить время на рендер во время игры. */}
+        {open && (
+          <div className="h-full flex flex-col">
           <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-700 bg-gradient-to-r from-violet-900/30 to-transparent">
             <div className="text-[11px] uppercase tracking-[0.28em] text-slate-200">DEV</div>
             <button
@@ -334,7 +343,7 @@ export function DevToolsDrawer({
               <div className="flex items-baseline justify-between gap-2">
                 <div className="text-[10px] uppercase tracking-[0.28em] text-slate-300">Лог действий</div>
                 <div className="text-[10px] font-mono text-slate-400">
-                  {copied ? 'скопировано' : copyError ? 'ошибка копирования' : `${(devLogEntries ?? []).length}`}
+                  {copied ? 'скопировано' : copyError ? 'ошибка копирования' : `${logCount}`}
                 </div>
               </div>
 
@@ -367,30 +376,28 @@ export function DevToolsDrawer({
               </div>
 
               <div className="mt-2 max-h-[260px] overflow-y-auto border border-slate-800 rounded-lg bg-black/30">
-                {(devLogEntries ?? []).length === 0 ? (
+                {logCount === 0 ? (
                   <div className="p-3 text-[11px] text-slate-500">пусто</div>
                 ) : (
                   <ul className="divide-y divide-slate-800">
-                    {(devLogEntries ?? [])
-                      .slice()
-                      .reverse()
-                      .map((e) => (
-                        <li key={e.id} className="p-2 text-[11px] text-slate-100">
-                          <div className="flex gap-2">
-                            <div className="shrink-0 font-mono text-[10px] text-slate-500">{formatTs(e.ts)}</div>
-                            <div className="leading-snug">{formatLogMessage(e)}</div>
-                          </div>
-                        </li>
-                      ))}
+                    {logEntriesNewestFirst.map((e) => (
+                      <li key={e.id} className="p-2 text-[11px] text-slate-100">
+                        <div className="flex gap-2">
+                          <div className="shrink-0 font-mono text-[10px] text-slate-500">{formatTs(e.ts)}</div>
+                          <div className="leading-snug">{formatLogMessage(e)}</div>
+                        </div>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
             </section>
           </div>
         </div>
+        )}
       </aside>
     </>
   )
-}
+})
 
 

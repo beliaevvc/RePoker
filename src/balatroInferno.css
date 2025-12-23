@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
 .font-press-start {
   font-family: 'Press Start 2P', cursive;
 }
@@ -19,6 +17,23 @@
     );
   background-size: 100% 3px, 3px 100%;
   box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
+}
+
+/* Mobile perf mode (минимальные изменения визуала ради FPS на iPhone/Safari):
+   - уменьшаем тяжёлый inset box-shadow у CRT overlay (дорогой paint)
+   - убираем mix-blend на мелких оверлеях
+   - отключаем самый дорогой слой шума в MAX WIN cinematic (feTurbulence) */
+.repoker-perf-mobile .crt-overlay {
+  box-shadow: inset 0 0 48px rgba(0, 0, 0, 0.82);
+}
+
+.repoker-perf-mobile .pixel-grid-overlay::after {
+  mix-blend-mode: normal;
+  opacity: 0.4;
+}
+
+.repoker-perf-mobile .maxwin-cinematic-noise {
+  display: none;
 }
 
 /* subtle "pixel grid" overlay for small badges/icons */

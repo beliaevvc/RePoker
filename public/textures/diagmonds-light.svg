@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+  <rect width="20" height="20" fill="transparent"/>
+  <!-- Simple diamond grid -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="0.8" shape-rendering="crispEdges">
+    <path d="M10 0 L20 10 L10 20 L0 10 Z"/>
+    <path d="M10 -10 L30 10 L10 30 L-10 10 Z"/>
+  </g>
+</svg>
+

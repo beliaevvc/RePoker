@@ -1,7 +1,7 @@
 /**
  * Файл: src/ui/screens/balatro-inferno/components/ElectricPlasmaOrbs.jsx
  * Слой: ui
- * Назначение: визуализация streak в виде “электрических орбов”.
+ * Назначение: визуализация streak в виде “электрических орбов” в normal-режиме.
  */
 
 /**

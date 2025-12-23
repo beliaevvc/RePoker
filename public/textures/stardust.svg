@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="transparent"/>
+  <!-- Lightweight “stardust” pattern (static, repeatable) -->
+  <g fill="#ffffff" opacity="0.35">
+    <circle cx="6" cy="8" r="0.8"/>
+    <circle cx="14" cy="22" r="0.6"/>
+    <circle cx="28" cy="10" r="0.7"/>
+    <circle cx="36" cy="26" r="0.5"/>
+    <circle cx="48" cy="14" r="0.9"/>
+    <circle cx="58" cy="30" r="0.6"/>
+    <circle cx="10" cy="46" r="0.7"/>
+    <circle cx="22" cy="54" r="0.5"/>
+    <circle cx="34" cy="42" r="0.8"/>
+    <circle cx="46" cy="50" r="0.6"/>
+    <circle cx="56" cy="44" r="0.7"/>
+  </g>
+  <g fill="#a5b4fc" opacity="0.25">
+    <circle cx="18" cy="6" r="0.6"/>
+    <circle cx="52" cy="8" r="0.5"/>
+    <circle cx="8" cy="34" r="0.5"/>
+    <circle cx="40" cy="60" r="0.6"/>
+  </g>
+</svg>
+
