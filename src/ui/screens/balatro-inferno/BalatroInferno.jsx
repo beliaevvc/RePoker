@@ -313,10 +313,10 @@ export default function BalatroInferno() {
       {isPhoneLandscape && (
         <div className="fixed inset-0 z-[5000] bg-black/85 backdrop-blur-sm flex items-center justify-center px-6">
           <div className="w-full max-w-sm text-center bg-[#0b1220]/95 border-2 border-slate-600 rounded-2xl shadow-[12px_12px_0_rgba(0,0,0,0.8)] p-5">
-            <div className="text-xs uppercase tracking-[0.28em] text-slate-300">LANDSCAPE</div>
-            <div className="mt-2 text-xl font-black text-white tracking-wider">Поверни телефон</div>
+            <div className="text-xs uppercase tracking-[0.28em] text-slate-300">LANDSCAPE DETECTED</div>
+            <div className="mt-2 text-xl font-black text-white tracking-wider">PLEASE ROTATE DEVICE</div>
             <div className="mt-2 text-[11px] leading-snug text-slate-300">
-              Игра рассчитана на вертикальную ориентацию. В landscape всё будет ломаться.
+              This game is designed for portrait mode. Please turn your phone vertically.
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-2">
@@ -328,7 +328,7 @@ export default function BalatroInferno() {
                 LOCK PORTRAIT
               </button>
               <div className="text-[10px] text-slate-500">
-                (Не везде поддерживается — просто поверни телефон вертикально)
+                (If supported)
               </div>
             </div>
           </div>
