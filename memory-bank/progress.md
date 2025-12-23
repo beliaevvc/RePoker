@@ -1,8 +1,8 @@
 # Progress (Memory Bank)
 
 ## Текущий статус
-- **Задача:** Архитектурный аудит RePoker (Clean Architecture) + рефакторинг/оптимизации (маленькими шагами, без поломок) + финальная документация.
-- **Этап:** Завершено и заархивировано. Браузер: Chrome → Safari; есть iPhone для проверки.
+- **Задача:** Актуализация style-guide.md — завершена
+- **Этап:** Готов к следующей задаче через `/van`
 
 ## Что сделано
 - [x] Зафиксирована задача и ограничения (прагматичная Clean Architecture, приоритет перфоманса, возможен поэтапный разрез монолита UI).
@@ -55,6 +55,22 @@
 - [x] Test deps (детерминизм): добавлен `fakeClock` (`src/infrastructure/clock/fakeClock.ts`) и `createTestBalatroInfernoDeps()` (`src/ui/screens/balatro-inferno/testDeps.ts`: seeded RNG + fake clock + in-memory storage/location). Добавлены тесты Vitest; прогон: **30/30 passed** (запуск с `npm test -- --pool=threads --maxWorkers=1 ...` в sandbox).
 - [x] Рефакторинг (без изменения поведения): упорядочены каскадные таймеры в `useBalatroInfernoController.js` — введён единый `createScheduler()` поверх `deps.clock` (guard по `cascadeAnimTokenRef` + централизованный cleanup). Проверка: **Vitest 30/30 passed**, линтов нет.
 - [x] Рефакторинг (без изменения поведения): минимально структурирован cascade state — введён `cascadePhaseRef` (ref‑фазы, UI не зависит), вынесены утилиты `src/ui/screens/balatro-inferno/scheduler.js` и `src/ui/screens/balatro-inferno/cascadeTimeline.js` (refill‑таймлайн), добавлен регрессионный тест `cascadeTimeline.test.ts` на `fakeClock`. Проверка: **Vitest 32/32 passed**, `npm run build` ок.
+- [x] Убраны всплывающие подсказки (tooltips) у кнопок: Play, Autogame, Turbo, Minus, Plus — удалены атрибуты `title` из `BalatroInferno.jsx` (6 мест: Turbo, Play, AUTO индикатор, Plus, Autogame, Minus). Проверка: **`npm run build` успешно**, линтер без ошибок.
+- [x] Актуализирован `memory-bank/productContext.md`:
+  - Обновлён пользовательский сценарий с учётом режимов CASCADE/NORMAL, автоплея и TURBO.
+  - Исправлены все пути к файлам (getBestHand: `src/domain/hand-evaluator/getBestHand.ts`, use-cases, constants).
+  - Добавлены разделы о режимах игры, автоплее, TURBO режиме и каскадных множителях.
+  - Исправлена информация о загрузке шрифтов (через `<link>` в `index.html`, не через `@import`).
+  - Добавлена информация об анимациях каскада (vanish/appear/refill-flash) и CRT-оверлее.
+  - Все пути к файлам проверены на актуальность через `glob_file_search`.
+  - Архив: `memory-bank/archive/archive-2025-01-product-context.md`
+- [x] Актуализирован `memory-bank/projectbrief.md`:
+  - Обновлено описание проекта с указанием типа (instant-игра, азартная игра) и названий (BalatroInferno — первое, RePoker — второе).
+  - Добавлена информация о режиме CASCADE как основном режиме игры.
+  - Добавлены разделы "Технический стек" и "Основные особенности".
+  - Обновлены цели с учётом текущей архитектуры.
+  - Документ синхронизирован с `productContext.md`, `techContext.md` и `README.md`.
+  - Архив: `memory-bank/archive/archive-2025-01-projectbrief-update.md`
 
 ## Известные проблемы / Риски
 - Риск перфоманса: большой экран `BalatroInferno.jsx` + много `setState` по таймерам → широкие ререндеры.
@@ -65,4 +81,8 @@
 
 ## Архив
 
+- `memory-bank/archive/archive-2025-12-23-style-guide.md`
+- `memory-bank/archive/archive-2025-01-projectbrief-update.md`
+- `memory-bank/archive/archive-2025-01-XX-remove-tooltips-buttons.md`
 - `memory-bank/archive/archive-2025-12-23-refactor-docs.md`
+- `memory-bank/archive/archive-2025-12-23-refactor-plan.md`

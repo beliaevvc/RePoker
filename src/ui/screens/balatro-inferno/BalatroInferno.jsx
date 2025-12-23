@@ -336,7 +336,6 @@ const FooterControls = memo(function FooterControls({
             'flex items-center justify-center',
           ].join(' ')}
           aria-pressed={turboEnabled}
-          title={isBusy ? 'Turbo нельзя переключать во время анимаций' : 'Turbo: ускорить каскад/раздачу/анимации выигрыша'}
         >
           <span
             className={`text-[10px] sm:text-xs font-bold tracking-wider ${
@@ -359,7 +358,6 @@ const FooterControls = memo(function FooterControls({
             'disabled:filter disabled:grayscale disabled:cursor-not-allowed',
             'transition-all flex items-center justify-center gap-2 sm:gap-4',
           ].join(' ')}
-          title="PLAY"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shine" />
 
@@ -379,7 +377,6 @@ const FooterControls = memo(function FooterControls({
                 'bg-white/10 backdrop-blur-sm border border-white/20',
                 'text-[10px] sm:text-xs text-white/90 font-press-start tracking-normal',
               ].join(' ')}
-              title={`AUTO: осталось ${autoRemaining}`}
             >
               AUTO {Math.max(0, autoRemaining)}
             </div>
@@ -390,7 +387,6 @@ const FooterControls = memo(function FooterControls({
           onClick={incBet}
           disabled={gameState !== 'idle' && gameState !== 'result'}
           className="w-full h-full bg-slate-700 hover:bg-slate-600 border-b-[6px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[6px] text-lg sm:text-xl col-start-3"
-          title="Увеличить ANTE"
         >
           +
         </button>
@@ -404,7 +400,6 @@ const FooterControls = memo(function FooterControls({
             'flex items-center justify-center',
             autoRunning ? 'bg-slate-600 hover:bg-slate-500' : 'bg-slate-700 hover:bg-slate-600',
           ].join(' ')}
-          title={autoRunning ? 'STOP: остановить автоигру' : 'AUTO: автоигра'}
           onClick={handleAuto}
         >
           <span
@@ -421,7 +416,6 @@ const FooterControls = memo(function FooterControls({
           onClick={decBet}
           disabled={gameState !== 'idle' && gameState !== 'result'}
           className="w-full h-full bg-slate-700 hover:bg-slate-600 border-b-[6px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[6px] text-lg sm:text-xl col-start-3 row-start-2"
-          title="Уменьшить ANTE"
         >
           -
         </button>
