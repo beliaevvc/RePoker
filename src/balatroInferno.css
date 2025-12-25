@@ -768,19 +768,12 @@
 
 /* LOGO: Миниатюрные карты (Ace Spades, King Hearts) */
 .logo-mini-cards {
-  display: none; /* Скрыты по умолчанию на маленьких экранах */
+  display: inline-flex;
   position: absolute;
   left: -2em; /* Сдвигаем карту левее от текста (воздух) */
   top: calc(50% - 2px); /* Поднимаем немного выше */
   transform: translateY(-50%) skewX(-4deg) rotate(2deg);
   z-index: 10;
-}
-
-/* Показываем мини-карты на средних и больших экранах */
-@media (min-width: 480px) {
-  .logo-mini-cards {
-    display: inline-flex;
-  }
 }
 
 .logo-mini-card {
