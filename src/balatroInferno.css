@@ -821,6 +821,22 @@
   }
 }
 
+/* Диапазон до 353x958 и меньше - поднять выше, ближе к центру */
+@media (max-width: 360px) and (min-height: 955px) and (max-height: 965px) {
+  .hand-board-container-adaptive {
+    margin-top: clamp(80px, 12vh, 150px) !important;
+    margin-bottom: clamp(40px, 6vh, 100px) !important;
+  }
+}
+
+/* Все разрешения с высотой 958px - поднять выше, ближе к центру */
+@media (min-height: 955px) and (max-height: 965px) {
+  .hand-board-container-adaptive {
+    margin-top: clamp(80px, 12vh, 150px) !important;
+    margin-bottom: clamp(40px, 6vh, 100px) !important;
+  }
+}
+
 /* Дополнительное правило для разрешения 378x958 - поднять выше, ближе к центру */
 @media (min-width: 370px) and (max-width: 385px) and (min-height: 955px) and (max-height: 965px) {
   .hand-board-container-adaptive {
