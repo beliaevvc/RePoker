@@ -7,7 +7,7 @@
  * - Поведение 1:1 с предыдущей реализацией (пока мы не дошли до этапов улучшения UX/мобилок).
  */
 
-import { Play, RotateCcw } from 'lucide-react'
+import { Play, RotateCcw, Crown } from 'lucide-react'
 import '../../../balatroInferno.css'
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
@@ -428,6 +428,15 @@ const FooterControls = memo(function FooterControls({
  * Пиксельная масть для мини-карт логотипа
  */
 function LogoPixelSuit({ type }) {
+  if (type === 'joker') {
+    return (
+      <Crown 
+        className="logo-mini-card-suit" 
+        style={{ width: '12px', height: '12px', fill: '#FFE55C', color: '#FFE55C' }}
+      />
+    )
+  }
+
   const isRed = type === 'hearts'
   const fill = isRed ? '#ef4444' : '#334155'
   const paths = {
@@ -499,18 +508,11 @@ function ResimpleLogo() {
       onMouseEnter={triggerBurst}
       onPointerDown={triggerBurst}
     >
-      <div className="relative animate-logo-glitch-burst max-w-full text-center logo-inner logo-transform-box flex items-center justify-center gap-2">
-        {/* Mini Cards (Left Side) */}
+      <div className="relative animate-logo-glitch-burst max-w-full text-center logo-inner logo-transform-box flex items-center justify-center">
+        {/* Mini Card - Joker (Left Side) */}
         <div className="logo-mini-cards" aria-hidden="true">
-          <div className="logo-mini-card black">
-            <span className="logo-mini-card-rank">A</span>
-            <LogoPixelSuit type="spades" />
-            <span className="logo-mini-card-bottom">A</span>
-          </div>
-          <div className="logo-mini-card red">
-            <span className="logo-mini-card-rank">K</span>
-            <LogoPixelSuit type="hearts" />
-            <span className="logo-mini-card-bottom">K</span>
+          <div className="logo-mini-card joker">
+            <LogoPixelSuit type="joker" />
           </div>
         </div>
 

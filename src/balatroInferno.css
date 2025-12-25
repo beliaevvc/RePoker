@@ -769,11 +769,10 @@
 /* LOGO: Миниатюрные карты (Ace Spades, King Hearts) */
 .logo-mini-cards {
   display: none; /* Скрыты по умолчанию на маленьких экранах */
-  vertical-align: middle;
-  margin-right: 0.5em; /* Отступ от текста справа */
-  margin-top: -16px; /* Поднимаем карты выше */
-  transform: skewX(-4deg) rotate(2deg);
-  position: relative;
+  position: absolute;
+  left: -2em; /* Сдвигаем карту левее от текста (воздух) */
+  top: calc(50% - 2px); /* Поднимаем немного выше */
+  transform: translateY(-50%) skewX(-4deg) rotate(2deg);
   z-index: 10;
 }
 
@@ -828,6 +827,15 @@
 
 .logo-mini-card.black { color: #111; }
 .logo-mini-card.red { color: #e00; }
+.logo-mini-card.joker { 
+  color: #FFE55C; /* Светлый золотой для короны (из logo-gradient-gold) */
+  background: linear-gradient(135deg, #FDB931 0%, #D4AF37 100%); /* Темный золотой для тела (из logo-gradient-gold) */
+  border-color: #FDB931;
+}
+
+.logo-mini-card-transform {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
 .logo-mini-card-rank {
   position: absolute;
@@ -876,6 +884,10 @@
   .logo-mini-card-suit {
     width: 16px;
     height: 16px;
+  }
+  .logo-mini-card.joker .logo-mini-card-suit {
+    width: 18px;
+    height: 18px;
   }
   .logo-mini-card-bottom { 
     font-size: 8px;
