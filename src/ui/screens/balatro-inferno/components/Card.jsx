@@ -202,6 +202,9 @@ export function Card({
   const clickTimerRef = useRef(null)
   const lastPointerDownAtRef = useRef(0)
 
+  // Проверка на мобильное устройство (touch-устройство)
+  const isMobileDevice = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
+
   useEffect(() => {
     if (!isInteractable) {
       // eslint-plugin-react-hooks (set-state-in-effect) ругается на синхронный setState в effect.
@@ -258,6 +261,15 @@ export function Card({
         setAnimState((prev) => (prev === 'shake-strong' ? 'idle' : prev))
       }, 500)
     } else if (nextCount >= 3) {
+      // На мобильных устройствах отключаем эффект hide-peek
+      if (isMobileDevice) {
+        // На мобильных просто сбрасываем счётчик без запуска анимации
+        setClickCount(0)
+        setAnimState('idle')
+        return
+      }
+
+      // На десктопе работаем как раньше
       // 0 -> hide right (index + 1)
       // 4 -> hide left (index - 1)
       // 1,2,3 -> random left or right
