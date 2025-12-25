@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
+import { X, Play } from 'lucide-react'
 import { MiniCard } from './MiniCard'
 import { formatMoneyFull } from '../moneyFormat'
 
@@ -73,25 +73,65 @@ export function RulesModal({ open, onClose }) {
         <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
           {/* Section 1: How to Play */}
           <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide">How to Play</h3>
-            <div className="flex items-start gap-3">
-              <div className="flex gap-1 flex-shrink-0 mt-0.5">
-                <MiniCard card={{ suit: 'hearts', rank: 14 }} isWinning={true} />
-                <MiniCard card={{ suit: 'spades', rank: 13 }} />
-                <MiniCard card={{ suit: 'diamonds', rank: 12 }} />
+            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide text-center">How to Play</h3>
+            <div className="flex flex-col gap-2 items-center">
+              <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
+                Select your bet amount using the + and - buttons
+              </p>
+              <div className="flex items-center gap-1.5 justify-center">
+                <button
+                  disabled
+                  className="w-8 h-8 bg-slate-700 border-b-[3px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[3px] text-sm flex items-center justify-center transition-all"
+                >
+                  +
+                </button>
+                <button
+                  disabled
+                  className="w-8 h-8 bg-slate-700 border-b-[3px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[3px] text-sm flex items-center justify-center transition-all"
+                >
+                  -
+                </button>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug flex-1">
-                Select your bet amount using the + and - buttons, then press <span className="font-bold text-white">PLAY</span> to deal 5 cards. The game automatically
-                evaluates your hand and finds the best poker combination. If you have a winning hand, those cards
+              <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
+                then press PLAY to deal 5 cards.
+              </p>
+              <div className="flex justify-center">
+                <button
+                  disabled
+                  className={[
+                    'relative overflow-hidden',
+                    'bg-gradient-to-r from-orange-500 to-red-600',
+                    'border-b-[6px] border-[#7f1d1d] rounded-lg',
+                    'shadow-[0_5px_10px_rgba(220,38,38,0.3)]',
+                    'flex items-center justify-center gap-1.5 px-4 py-2',
+                    'cursor-default',
+                  ].join(' ')}
+                >
+                  <Play className="w-4 h-4 fill-white text-white" />
+                  <span className="text-sm text-white tracking-[0.2em] drop-shadow-md font-black">
+                    PLAY
+                  </span>
+                </button>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
+                The game automatically evaluates your hand and finds the best poker combination. If you have a winning hand, those cards
                 disappear and are replaced by new cards from the deck, creating a cascade effect.
               </p>
+              {/* Winning hand example - Three of a Kind */}
+              <div className="flex items-center justify-center gap-1 mt-3 relative" style={{ overflow: 'visible' }}>
+                <MiniCard card={{ suit: 'hearts', rank: 14 }} isWinning={true} />
+                <MiniCard card={{ suit: 'spades', rank: 14 }} isWinning={true} />
+                <MiniCard card={{ suit: 'diamonds', rank: 14 }} isWinning={true} />
+                <MiniCard card={{ suit: 'clubs', rank: 9 }} />
+                <MiniCard card={{ suit: 'hearts', rank: 5 }} />
+              </div>
             </div>
           </div>
 
           {/* Section 2: Betting & Balance */}
           <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide">Betting & Balance</h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide text-center">Betting & Balance</h3>
+            <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
               Your bet is deducted at the start of each deal. Winnings are paid out as a
               single payment at the end of the cascade. Available bet amounts range from 0.2 to 100.
             </p>

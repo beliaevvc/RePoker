@@ -105,13 +105,41 @@ export function MiniCard({ card, isWinning = false, isJoker = false }) {
   return (
     <div
       className={[
-        'w-[32px] h-[44px] rounded border relative overflow-hidden select-none flex flex-col items-center justify-between py-1',
+        'w-[32px] h-[44px] rounded border relative select-none flex flex-col items-center justify-between py-1',
         bgColor,
         borderColor,
         shadow,
       ].join(' ')}
+      style={isWinning ? { overflow: 'visible' } : { overflow: 'hidden' }}
       title={isJoker ? 'Joker' : `${RANK_NAMES[card.rank]} of ${card.suit}`}
     >
+      {/* Green glow effect for winning cards */}
+      {isWinning && (
+        <>
+          <div className="absolute -inset-[4px] z-0 rounded-lg opacity-50 blur-sm mix-blend-screen pointer-events-none">
+            <div className="w-full h-full bg-gradient-to-t from-emerald-400 via-green-500 to-teal-600 animate-pulse-fast" />
+          </div>
+          {/* Electric border effect */}
+          <div className="absolute -inset-[3px] z-40 pointer-events-none">
+            <svg className="w-full h-full" viewBox="0 0 32 44" preserveAspectRatio="none">
+              <rect
+                x="2"
+                y="2"
+                width="28"
+                height="40"
+                rx="4"
+                fill="none"
+                stroke="white"
+                strokeWidth="1.5"
+                className="animate-electric-dash opacity-80"
+                style={{
+                  filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.6))',
+                }}
+              />
+            </svg>
+          </div>
+        </>
+      )}
       {/* Rank (Top-Left для читаемости) */}
       {!isJoker && (
         <span className={`text-[10px] font-black leading-none font-press-start ${textColor}`}>
