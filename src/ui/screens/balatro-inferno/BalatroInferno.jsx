@@ -502,7 +502,7 @@ function ResimpleLogo() {
   return (
     <div
       className={[
-        'relative group cursor-pointer w-full flex justify-center mt-[clamp(4px,1vh,8px)] mb-[clamp(4px,1vh,8px)] ml-[0.5em]',
+        'relative group cursor-pointer w-full flex justify-center mt-[clamp(4px,1vh,8px)] mb-[clamp(4px,1vh,8px)] ml-[1.5em]',
         burst ? 'logo-burst' : '',
       ].join(' ')}
       onMouseEnter={triggerBurst}
