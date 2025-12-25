@@ -424,6 +424,48 @@ const FooterControls = memo(function FooterControls({
   )
 })
 
+/**
+ * Пиксельная масть для мини-карт логотипа
+ */
+function LogoPixelSuit({ type }) {
+  const isRed = type === 'hearts'
+  const fill = isRed ? '#ef4444' : '#334155'
+  const paths = {
+    hearts:
+      'M3 2 h2 v1 h-2 z M6 2 h2 v1 h-2 z ' +
+      'M2 3 h7 v1 h-7 z ' +
+      'M1 4 h9 v1 h-9 z ' +
+      'M1 5 h9 v1 h-9 z ' +
+      'M2 6 h7 v1 h-7 z ' +
+      'M3 7 h5 v1 h-5 z ' +
+      'M4 8 h3 v1 h-3 z ' +
+      'M5 9 h1 v1 h-1 z',
+    spades:
+      'M5 1 h1 v1 h-1 z ' +
+      'M4 2 h3 v1 h-3 z ' +
+      'M3 3 h5 v1 h-5 z ' +
+      'M2 4 h7 v1 h-7 z ' +
+      'M1 5 h9 v1 h-9 z ' +
+      'M1 6 h9 v1 h-9 z ' +
+      'M2 7 h3 v1 h-3 z M6 7 h3 v1 h-3 z ' +
+      'M5 7 h1 v2 h-1 z ' +
+      'M4 8 h3 v1 h-3 z ' +
+      'M3 9 h5 v1 h-5 z',
+  }
+
+  return (
+    <svg
+      viewBox="0 0 11 11"
+      className="logo-mini-card-suit"
+      style={{ fill, width: '12px', height: '12px' }}
+      preserveAspectRatio="xMidYMid meet"
+      shapeRendering="crispEdges"
+    >
+      <path d={paths[type]} />
+    </svg>
+  )
+}
+
 function ResimpleLogo() {
   const BURST_MS = 150
   const COOLDOWN_MS = 800
@@ -457,22 +499,41 @@ function ResimpleLogo() {
       onMouseEnter={triggerBurst}
       onPointerDown={triggerBurst}
     >
-      <div className="relative animate-logo-glitch-burst max-w-full text-center logo-inner">
-        <span className="logo-neon-shimmer logo-neon-pulse text-[clamp(18px,6vw,36px)] font-black tracking-[0.08em] sm:tracking-[0.1em] select-none uppercase font-mono break-words drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
-          POKERFALL
+      <div className="relative animate-logo-glitch-burst max-w-full text-center logo-inner logo-transform-box flex items-center justify-center gap-2">
+        {/* Mini Cards (Left Side) */}
+        <div className="logo-mini-cards" aria-hidden="true">
+          <div className="logo-mini-card black">
+            <span className="logo-mini-card-rank">A</span>
+            <LogoPixelSuit type="spades" />
+            <span className="logo-mini-card-bottom">A</span>
+          </div>
+          <div className="logo-mini-card red">
+            <span className="logo-mini-card-rank">K</span>
+            <LogoPixelSuit type="hearts" />
+            <span className="logo-mini-card-bottom">K</span>
+          </div>
+        </div>
+
+        {/* Main Text Layer */}
+        <span className="logo-neon-pulse text-[clamp(18px,6vw,36px)] font-black tracking-[0.08em] sm:tracking-[0.1em] select-none uppercase font-mono break-words drop-shadow-[4px_4px_0_rgba(0,0,0,1)]">
+          <span className="logo-gradient-gold">POKER</span>
+          <span className="logo-gradient-gold">FALL</span>
         </span>
 
+        {/* Ghost Layer 1 (Red/Pink RGB Shift) */}
         <span
-          className="absolute top-0 left-[-2px] logo-ghost logo-ghost-1 opacity-0 animate-glitch-text-1-burst mix-blend-screen text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full"
+          className="absolute top-0 left-[-2px] logo-ghost logo-ghost-1 opacity-0 animate-glitch-text-1-burst mix-blend-screen text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full flex items-center justify-center gap-2"
           aria-hidden="true"
         >
-          POKERFALL
+          <span>POKERFALL</span>
         </span>
+
+        {/* Ghost Layer 2 (Blue/Cyan RGB Shift) */}
         <span
-          className="absolute top-0 left-[2px] logo-ghost logo-ghost-2 opacity-0 animate-glitch-text-2-burst mix-blend-screen text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full"
+          className="absolute top-0 left-[2px] logo-ghost logo-ghost-2 opacity-0 animate-glitch-text-2-burst mix-blend-screen text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full flex items-center justify-center gap-2"
           aria-hidden="true"
         >
-          POKERFALL
+          <span>POKERFALL</span>
         </span>
       </div>
     </div>
