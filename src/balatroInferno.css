@@ -821,6 +821,14 @@
   }
 }
 
+/* Дополнительное правило для разрешения 378x958 - поднять выше, ближе к центру */
+@media (min-width: 370px) and (max-width: 385px) and (min-height: 955px) and (max-height: 965px) {
+  .hand-board-container-adaptive {
+    margin-top: clamp(80px, 12vh, 150px) !important;
+    margin-bottom: clamp(40px, 6vh, 100px) !important;
+  }
+}
+
 /* Диапазон 774-846x958 - элементы ниже */
 @media (min-width: 770px) and (max-width: 850px) and (min-height: 955px) and (max-height: 965px) {
   .hand-board-container-adaptive {
