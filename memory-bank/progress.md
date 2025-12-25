@@ -1,9 +1,9 @@
 # Progress (Memory Bank)
 
 ## Текущий статус
-- **Задача:** Создать крутой текстовый логотип в стиле Balatro Pokerfall вместо текущего "RESIMPLE GAMES" — ✅ Завершено
-- **Этап:** Рефлексия (REFLECT) → Архивация (ARCHIVE)
-- **Ветка:** `main` (слита из `logo-pokerfall`)
+- **Задача:** Готов к новой задаче
+- **Этап:** VAN (ожидание новой задачи)
+- **Ветка:** `main`
 
 ## Что сделано
 - [x] Зафиксирована задача и ограничения (прагматичная Clean Architecture, приоритет перфоманса, возможен поэтапный разрез монолита UI).
@@ -79,7 +79,7 @@
 
 ## Что сделано (текущая задача)
 
-### Логотип в стиле Balatro Pokerfall — ✅ Завершено
+### Логотип в стиле Balatro Pokerfall — ✅ Завершено и архивировано
 - [x] Creative-фаза завершена: зафиксированы решения по цветовой палитре, неоновому свечению, glitch-эффектам и shimmer-анимациям (`memory-bank/creative/creative-logo-pokerfall.md`)
 - [x] Добавлены CSS-эффекты в `src/balatroInferno.css`:
   - Неоновый градиент с shimmer (`logo-gradient-gold`): золотой → оранжевый → томатный (5s цикл)
@@ -95,13 +95,14 @@
   - Создан компонент `LogoPixelSuit` для пиксельных мастей и джокера
   - Реализованы пиксельные масти через SVG (как в основном компоненте `Card`)
   - Применён пиксельный шрифт `Press Start 2P` для букв
-  - Настроена адаптивность (скрывается на экранах < 480px)
   - Настроено позиционирование (абсолютное, с отступом от текста)
+  - Отображается на всех разрешениях (включая мобильные)
 - [x] Проверка сборки: `npm run build` успешно (множество итераций)
 - [x] Проверка линтера: ошибок нет
 - [x] Визуальная проверка в браузере: выполнена в процессе итераций с пользователем
 - [x] Ветка `logo-pokerfall` слита в `main`
 - [x] Рефлексия: создан файл `memory-bank/reflection/reflection-2025-01-logo-pokerfall.md`
+- [x] Архивация: создан файл `memory-bank/archive/archive-2025-01-logo-pokerfall.md`
 
 ### Предыдущая задача (архив)
 - [x] Добавлен кастомный CSS класс `.hand-board-container-adaptive` в `src/balatroInferno.css` с множеством медиа-запросов для различных разрешений
@@ -117,6 +118,7 @@
 
 ## Архив
 
+- `memory-bank/archive/archive-2025-01-logo-pokerfall.md` (логотип в стиле Balatro Pokerfall)
 - `memory-bank/reflection/reflection-2025-01-logo-pokerfall.md` (рефлексия по логотипу Pokerfall)
 - `memory-bank/archive/archive-2025-01-XX-adaptive-hand-board-positioning.md`
 - `memory-bank/archive/archive-2025-01-XX-disable-mobile-hide-peek.md`
