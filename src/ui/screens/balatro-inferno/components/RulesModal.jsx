@@ -301,6 +301,81 @@ export function RulesModal({ open, onClose }) {
                 manually.
               </p>
             </div>
+            {/* Mini AutoPlay Modal visualization */}
+            <div className="mt-3 flex justify-center">
+              <div className="w-full max-w-[280px] bg-[#1a1a2e] border-[2px] border-slate-500 shadow-[6px_6px_0_rgba(0,0,0,0.8)] p-0.5 transform rotate-[-2deg]">
+                {/* Inner CRT container */}
+                <div className="relative bg-[#050510] border border-slate-700 p-2 overflow-hidden">
+                  {/* CRT Grid Background */}
+                  <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] pointer-events-none opacity-40" />
+                  
+                  <div className="relative z-10">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="inline-block relative">
+                          <div className="absolute -inset-0.5 bg-red-500/20 blur-sm animate-pulse" />
+                          <div className="relative border-l-2 border-orange-500 pl-1.5">
+                            <div className="text-[5px] text-orange-400 font-bold uppercase tracking-[0.2em] mb-0.5">AUTO MODE</div>
+                            <div className="text-xs text-white font-black tracking-widest uppercase leading-none drop-shadow-[1px_1px_0_rgba(255,0,0,0.5)]">
+                              AUTOSPINS
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        disabled
+                        className="w-5 h-5 bg-slate-800 border border-slate-600 text-slate-200 flex items-center justify-center shadow-[2px_2px_0_#000] cursor-default"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {/* Preset buttons */}
+                    <div className="grid grid-cols-3 gap-1.5 mb-3">
+                      {[10, 25, 50, 100, 500, 1000].map((n) => (
+                        <button
+                          key={n}
+                          disabled
+                          className={[
+                            'h-6 border border-slate-600 font-black tracking-[0.1em] uppercase text-[7px] relative',
+                            'bg-slate-800 text-slate-300 shadow-[2px_2px_0_#000]',
+                            'cursor-default',
+                          ].join(' ')}
+                        >
+                          {/* Scanline overlay */}
+                          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0)_50%,rgba(0,0,0,0.2)_50%)] bg-[length:100%_2px] pointer-events-none opacity-50" />
+                          <span className="relative z-10">{n}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* START button */}
+                    <button
+                      disabled
+                      className={[
+                        'w-full h-8 font-black tracking-[0.15em] uppercase text-xs relative overflow-hidden group',
+                        'bg-gradient-to-r from-orange-500 to-red-600',
+                        'border-b-[4px] border-[#7f1d1d] rounded-lg',
+                        'shadow-[0_4px_8px_rgba(220,38,38,0.3)]',
+                        'cursor-default',
+                      ].join(' ')}
+                    >
+                      {/* Shine effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full" />
+                      <span className="relative z-10 drop-shadow-md text-white">START</span>
+                    </button>
+
+                    {/* Hint */}
+                    <div className="text-center bg-black/40 border border-white/10 p-1 mt-1">
+                      <div className="text-[6px] text-orange-200 font-mono uppercase tracking-[0.1em]">
+                        &gt; SELECT AMOUNT <span className="animate-blink">_</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Section 9: TURBO Mode */}
