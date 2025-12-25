@@ -237,6 +237,7 @@ export function useBalatroInfernoController(deps) {
   const [lastCascadeWinHistory, setLastCascadeWinHistory] = useState([])
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
   const [paytableModalOpen, setPaytableModalOpen] = useState(false)
+  const [rulesModalOpen, setRulesModalOpen] = useState(false)
   const cascadeWinHistoryRef = useRef([]) // актуальная история для таймеров (чтобы не перезапускать эффекты)
   const [cascadeVanishingIndices, setCascadeVanishingIndices] = useState([])
   const [cascadeAppearingIndices, setCascadeAppearingIndices] = useState([])
@@ -1005,6 +1006,8 @@ export function useBalatroInfernoController(deps) {
     setHistoryModalOpen,
     paytableModalOpen,
     setPaytableModalOpen,
+    rulesModalOpen,
+    setRulesModalOpen,
   }
 }
 

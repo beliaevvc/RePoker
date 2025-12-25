@@ -20,6 +20,7 @@ import { DevToolsDrawer } from './components/DevToolsDrawer'
 import { AutoPlayModal } from './components/AutoPlayModal'
 import { CascadeHistoryModal } from './components/CascadeHistoryModal'
 import { PaytableModal } from './components/PaytableModal'
+import { RulesModal } from './components/RulesModal'
 import { getBestHand } from '../../../domain/hand-evaluator/getBestHand'
 import { getCascadeMultiplierForWinStep } from '../../../application/game/cascadeMultiplier'
 import { formatMoneyAdaptive, formatMoneyCompact, formatMoneyFull } from './moneyFormat'
@@ -61,8 +62,10 @@ const HeaderBar = memo(function HeaderBar({
   setDevToolsOpen,
   devToolsExplicit,
   setPaytableModalOpen,
+  setRulesModalOpen,
 }) {
   const openPaytable = useCallback(() => setPaytableModalOpen(true), [setPaytableModalOpen])
+  const openRules = useCallback(() => setRulesModalOpen(true), [setRulesModalOpen])
   const toggleDevTools = useCallback(() => setDevToolsOpen((v) => !v), [setDevToolsOpen])
   const setModeNormal = useCallback(() => setMode('normal'), [setMode])
   const setModeCascade = useCallback(() => setMode('cascade'), [setMode])
@@ -175,24 +178,44 @@ const HeaderBar = memo(function HeaderBar({
         </div>
       ) : (
         <div className="w-full max-w-5xl px-3 sm:px-4 grid grid-cols-2 sm:grid-cols-3 items-center mt-2 sm:mt-3">
-          <button
-            type="button"
-            onClick={openPaytable}
-            className={[
-              'justify-self-start inline-flex items-center gap-2 h-7',
-              'text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest',
-              'border-b border-transparent hover:border-slate-400 transition-all group',
-            ].join(' ')}
-          >
-            <span
-              className="text-xl leading-none filter grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-200"
-              aria-hidden="true"
-              role="img"
+          <div className="flex items-center gap-3 justify-self-start">
+            <button
+              type="button"
+              onClick={openPaytable}
+              className={[
+                'inline-flex items-center gap-2 h-7',
+                'text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest',
+                'border-b border-transparent hover:border-slate-400 transition-all group',
+              ].join(' ')}
             >
-              💵
-            </span>
-            <span className="leading-none mt-[4px]">PAYTABLE</span>
-          </button>
+              <span
+                className="text-xl leading-none filter grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-200"
+                aria-hidden="true"
+                role="img"
+              >
+                💵
+              </span>
+              <span className="leading-none mt-[4px]">PAYTABLE</span>
+            </button>
+            <button
+              type="button"
+              onClick={openRules}
+              className={[
+                'inline-flex items-center gap-2 h-7',
+                'text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest',
+                'border-b border-transparent hover:border-slate-400 transition-all group',
+              ].join(' ')}
+            >
+              <span
+                className="text-xl leading-none filter grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-200"
+                aria-hidden="true"
+                role="img"
+              >
+                📖
+              </span>
+              <span className="leading-none mt-[4px]">RULES</span>
+            </button>
+          </div>
 
           <div className="hidden sm:block" />
 
@@ -220,8 +243,8 @@ const HeaderBar = memo(function HeaderBar({
   )
 })
 
-const ModalsHost = memo(function ModalsHost({ auto, history, paytable }) {
-  if (!auto && !history && !paytable) return null
+const ModalsHost = memo(function ModalsHost({ auto, history, paytable, rules }) {
+  if (!auto && !history && !paytable && !rules) return null
 
   return (
     <>
@@ -245,6 +268,8 @@ const ModalsHost = memo(function ModalsHost({ auto, history, paytable }) {
       {paytable && (
         <PaytableModal open={paytable.open} bet={paytable.bet} onAdjustBet={paytable.onAdjustBet} onClose={paytable.onClose} />
       )}
+
+      {rules && <RulesModal open={rules.open} onClose={rules.onClose} />}
     </>
   )
 })
@@ -617,6 +642,8 @@ export default function BalatroInferno() {
     setHistoryModalOpen,
     paytableModalOpen,
     setPaytableModalOpen,
+    rulesModalOpen,
+    setRulesModalOpen,
   } = useBalatroInfernoController()
 
   const openHistoryModal = useCallback(() => setHistoryModalOpen(true), [setHistoryModalOpen])
@@ -832,6 +859,7 @@ export default function BalatroInferno() {
 
   const closeHistoryModal = useCallback(() => setHistoryModalOpen(false), [])
   const closePaytableModal = useCallback(() => setPaytableModalOpen(false), [])
+  const closeRulesModal = useCallback(() => setRulesModalOpen(false), [])
 
   // Only pass “heavy” props when modal is actually open (keeps ModalsHost stable during cascade ticks).
   const autoModalProps = autoModalOpen
@@ -862,6 +890,13 @@ export default function BalatroInferno() {
         bet: Number(bet || 0),
         onAdjustBet: adjustBet,
         onClose: closePaytableModal,
+      }
+    : null
+
+  const rulesModalProps = rulesModalOpen
+    ? {
+        open: true,
+        onClose: closeRulesModal,
       }
     : null
 
@@ -987,7 +1022,7 @@ export default function BalatroInferno() {
         </>
       )}
 
-      <ModalsHost auto={autoModalProps} history={historyModalProps} paytable={paytableModalProps} />
+      <ModalsHost auto={autoModalProps} history={historyModalProps} paytable={paytableModalProps} rules={rulesModalProps} />
 
       <div
         className={`relative z-10 w-full flex-1 min-h-0 flex flex-col items-center py-[clamp(8px,2vh,24px)] ${effectiveShakeClass} ${
@@ -1075,6 +1110,7 @@ export default function BalatroInferno() {
           setDevToolsOpen={setDevToolsOpen}
           devToolsExplicit={devToolsExplicit}
           setPaytableModalOpen={setPaytableModalOpen}
+          setRulesModalOpen={setRulesModalOpen}
         />
 
         {/* Центр (карты/эффекты): без скролла. Всё должно умещаться в один экран. */}
