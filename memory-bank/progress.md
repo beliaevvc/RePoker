@@ -1,8 +1,9 @@
 # Progress (Memory Bank)
 
 ## Текущий статус
-- **Задача:** Адаптивная верстка: поднять карты (HandBoard) и блок cascade mult (CascadeMultiplierIndicator) ближе к центру на разрешениях 407x958, 510x958, 702x958, 830x958
-- **Этап:** BUILD — реализация адаптивных стилей
+- **Задача:** Адаптивная верстка: поднять карты (HandBoard) и блок cascade mult (CascadeMultiplierIndicator) ближе к центру на разрешениях 407x958, 510x958, 702x958, 830x958 — ✅ Завершена
+- **Этап:** Архивация завершена
+- **Архив:** `memory-bank/archive/archive-2025-01-XX-adaptive-hand-board-positioning.md`
 
 ## Что сделано
 - [x] Зафиксирована задача и ограничения (прагматичная Clean Architecture, приоритет перфоманса, возможен поэтапный разрез монолита UI).
@@ -77,17 +78,20 @@
 - Риск мобилок: тяжёлые визуальные эффекты (blur/градиенты/оверлеи) могут давить GPU.
 
 ## Что сделано (текущая задача)
-- [x] Добавлен кастомный CSS класс `.hand-board-container-adaptive` в `src/balatroInferno.css` с медиа-запросом для разрешений 400-840px × 950-970px
+- [x] Добавлен кастомный CSS класс `.hand-board-container-adaptive` в `src/balatroInferno.css` с множеством медиа-запросов для различных разрешений
 - [x] Применён класс к контейнеру с картами в `BalatroInferno.jsx` (строка 1074)
-- [x] Стили настроены: `margin-top: clamp(20px, 5vh, 40px)` и `margin-bottom: clamp(40px, 6vh, 100px)` для поднятия элементов ближе к центру
+- [x] Добавлены правила для множества разрешений по запросам пользователя (378x958, 388x958, 395x958, 367x958, 797x958, 807x958, 824x958, 838x958, 842x958, диапазон 774-846x958, до 353x958 и меньше, универсальное правило для всех разрешений с высотой 958px)
+- [x] Исправлен баг с полосками на тексте CascadeMultiplierIndicator (добавлены `transform-gpu` и `will-change-transform`)
 - [x] Проверка линтера: ошибок нет
-- [x] Проверка сборки: `npm run build` успешно (931ms)
+- [x] Проверка сборки: `npm run build` успешно (множество сборок в процессе итераций)
+- [x] Рефлексия: создан файл `memory-bank/reflection/reflection-2025-01-XX-adaptive-hand-board-positioning.md`
 
 ## Следующие шаги
 - Следующая задача — через `/van`
 
 ## Архив
 
+- `memory-bank/archive/archive-2025-01-XX-adaptive-hand-board-positioning.md`
 - `memory-bank/archive/archive-2025-01-XX-disable-mobile-hide-peek.md`
 - `memory-bank/archive/archive-2025-12-23-style-guide.md`
 - `memory-bank/archive/archive-2025-01-projectbrief-update.md`
