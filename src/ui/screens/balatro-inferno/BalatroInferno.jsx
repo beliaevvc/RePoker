@@ -502,14 +502,13 @@ function ResimpleLogo() {
   return (
     <div
       className={[
-        'relative group cursor-pointer w-full flex justify-center mt-[clamp(4px,1vh,8px)] mb-[clamp(4px,1vh,8px)]',
-        'grid grid-cols-[clamp(64px,12vw,90px)_minmax(0,1fr)_clamp(64px,12vw,90px)]',
+        'relative group cursor-pointer w-full flex justify-center mt-[clamp(4px,1vh,8px)] mb-[clamp(4px,1vh,8px)] ml-[0.5em]',
         burst ? 'logo-burst' : '',
       ].join(' ')}
       onMouseEnter={triggerBurst}
       onPointerDown={triggerBurst}
     >
-      <div className="relative animate-logo-glitch-burst max-w-full text-center logo-inner logo-transform-box flex items-center justify-center col-start-2 justify-self-end pr-[clamp(64px,12vw,90px)]">
+      <div className="relative animate-logo-glitch-burst max-w-full text-center logo-inner logo-transform-box flex items-center justify-center">
         {/* Mini Card - Joker (Left Side) */}
         <div className="logo-mini-cards" aria-hidden="true">
           <div className="logo-mini-card joker">
