@@ -109,7 +109,7 @@ export const CascadeMultiplierIndicator = memo(function CascadeMultiplierIndicat
 
   return (
     <div className="flex flex-col items-center justify-start w-full relative z-20 h-[76px] pt-1">
-      <div className="text-[10px] uppercase tracking-[0.22em] text-slate-300/90">
+      <div className="text-[10px] uppercase tracking-[0.22em] text-slate-300/90 transform-gpu will-change-transform">
         CASCADE MULT {armed ? <span className="text-white">x{multiplier}</span> : <span className="text-slate-600">x—</span>}
         <span className="text-slate-500"> · </span>
         <span className="text-slate-300">STEP {winStepNumber}</span>
