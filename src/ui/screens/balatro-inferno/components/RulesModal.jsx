@@ -76,22 +76,22 @@ export function RulesModal({ open, onClose }) {
             <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide text-center">How to Play</h3>
             <div className="flex flex-col gap-2 items-center">
               <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
-                Select your bet amount using the + and - buttons
-              </p>
-              <div className="flex items-center gap-1.5 justify-center">
+                Select your bet amount using the{' '}
                 <button
                   disabled
-                  className="w-8 h-8 bg-slate-700 border-b-[3px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[3px] text-sm flex items-center justify-center transition-all"
+                  className="inline-flex items-center justify-center w-8 h-8 bg-slate-700 border-b-[3px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[3px] text-sm transition-all mx-0.5"
                 >
                   +
                 </button>
+                {' '}and{' '}
                 <button
                   disabled
-                  className="w-8 h-8 bg-slate-700 border-b-[3px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[3px] text-sm flex items-center justify-center transition-all"
+                  className="inline-flex items-center justify-center w-8 h-8 bg-slate-700 border-b-[3px] border-slate-900 rounded-lg text-white active:border-b-0 active:translate-y-[3px] text-sm transition-all mx-0.5"
                 >
                   -
                 </button>
-              </div>
+                {' '}buttons
+              </p>
               <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
                 then press PLAY to deal 5 cards.
               </p>
@@ -160,7 +160,7 @@ export function RulesModal({ open, onClose }) {
 
           {/* Section 3: CASCADE Mode */}
           <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide">CASCADE Mode</h3>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide text-center">CASCADE Mode</h3>
             <div className="flex flex-col items-center gap-3">
               {/* Cards visualization */}
               <div className="flex flex-col items-center gap-1.5">
@@ -212,25 +212,27 @@ export function RulesModal({ open, onClose }) {
 
           {/* Section 4: Hand Combinations */}
           <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide">Hand Combinations</h3>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide text-center">Hand Combinations</h3>
             <div className="flex items-center justify-center gap-1.5 mb-2">
               <MiniCard card={{ suit: 'hearts', rank: 14 }} isWinning={true} />
-              <MiniCard card={{ suit: 'hearts', rank: 14 }} isWinning={true} />
-              <MiniCard card={{ suit: 'spades', rank: 13 }} />
-              <MiniCard card={{ suit: 'diamonds', rank: 9 }} />
-              <MiniCard card={{ suit: 'clubs', rank: 5 }} />
+              <MiniCard card={{ suit: 'spades', rank: 14 }} isWinning={true} />
+              <MiniCard card={{ suit: 'diamonds', rank: 14 }} isWinning={true} />
+              <MiniCard card={{ suit: 'clubs', rank: 13 }} isWinning={true} />
+              <MiniCard card={{ suit: 'hearts', rank: 13 }} isWinning={true} />
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
               The game uses standard poker hand combinations: Pair, Two Pair, Three of a Kind, Straight, Flush, Full
-              House, Four of a Kind, Straight Flush, Royal Flush. See the PAYTABLE button in the header for the full
-              list of combinations and payouts.
+              House, Four of a Kind, Straight Flush, Royal Flush.
+            </p>
+            <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
+              See the <span className="text-blue-400 font-semibold">PAYTABLE</span> button in the header for the full list of combinations and payouts.
             </p>
           </div>
 
           {/* Section 5: Cascade Multipliers */}
           <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide">Cascade Multipliers</h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide text-center">Cascade Multipliers</h3>
+            <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
               In CASCADE mode, each winning step increases the payout multiplier:
             </p>
             <div className="mt-2 flex items-center justify-center gap-2">
@@ -247,7 +249,7 @@ export function RulesModal({ open, onClose }) {
                 5×
               </div>
             </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug mt-1">
+            <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug mt-1 text-center">
               The multiplier applies only to hand combination payouts, not to the maximum win (Deck Clear).
             </p>
           </div>
@@ -289,22 +291,13 @@ export function RulesModal({ open, onClose }) {
 
           {/* Section 8: Auto Play */}
           <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide">Auto Play</h3>
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col gap-0.5 flex-shrink-0">
-                <div className="text-[10px] font-bold text-orange-400 bg-orange-900/30 px-1.5 py-0.5 rounded border border-orange-700/50 text-center">
-                  10
-                </div>
-                <div className="text-[10px] font-bold text-orange-400 bg-orange-900/30 px-1.5 py-0.5 rounded border border-orange-700/50 text-center">
-                  25
-                </div>
-                <div className="text-[10px] font-bold text-orange-400 bg-orange-900/30 px-1.5 py-0.5 rounded border border-orange-700/50 text-center">
-                  ∞
-                </div>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug flex-1">
-                Press the <span className="font-bold text-white">AUTO</span> button to select the number of automatic spins (10, 25, 50, 100, or infinite). The game
-                will automatically perform spins until the selected amount is completed, you run out of money, or you stop
+            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide text-center">Auto Play</h3>
+            <div className="flex flex-col gap-2">
+              <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
+                Press the <span className="font-bold text-white">AUTO</span> button to select the number of automatic spins (10, 25, 50, or 100).
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
+                The game will automatically perform spins until the selected amount is completed, you run out of money, or you stop
                 manually.
               </p>
             </div>
