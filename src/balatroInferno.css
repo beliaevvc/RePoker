@@ -578,19 +578,6 @@
   user-select: none;
   will-change: transform, opacity, clip-path, filter;
 }
-.logo-ghost-1 {
-  color: rgba(255, 60, 130, 0.45) !important; /* magenta-ish */
-}
-.logo-ghost-2 {
-  color: rgba(60, 200, 255, 0.45) !important; /* cyan-ish */
-}
-
-.logo-burst .logo-inner {
-  animation: logo-glitch-hit 150ms steps(1, end);
-}
-.logo-burst .logo-ghost {
-  opacity: 1 !important;
-}
 
 @keyframes glitch-text-1 {
   0% { clip-path: inset(40% 0 61% 0); opacity: 0; }
@@ -707,6 +694,146 @@
   .logo-ghost {
     opacity: 0 !important;
   }
+  .logo-neon-shimmer,
+  .logo-neon-pulse {
+    animation: none !important;
+  }
+}
+
+/* LOGO: Неоновый градиент с shimmer (стиль Balatro Pokerfall) */
+@keyframes logo-neon-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.logo-neon-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    #FFD700 0%,
+    #FFA500 25%,
+    #FF6347 50%,
+    #FFA500 75%,
+    #FFD700 100%
+  );
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: logo-neon-shimmer 4.5s linear infinite;
+  will-change: background-position;
+}
+
+.logo-burst .logo-neon-shimmer {
+  animation-duration: 2s;
+}
+
+/* LOGO: Пульсация неонового свечения */
+@keyframes logo-neon-pulse {
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px rgba(255, 215, 0, 0.4),
+      0 0 20px rgba(255, 165, 0, 0.3),
+      0 0 30px rgba(255, 100, 0, 0.15);
+  }
+  50% {
+    text-shadow:
+      0 0 12px rgba(255, 215, 0, 0.7),
+      0 0 24px rgba(255, 165, 0, 0.6),
+      0 0 36px rgba(255, 100, 0, 0.3);
+  }
+}
+
+.logo-neon-pulse {
+  animation: logo-neon-pulse 3s ease-in-out infinite;
+  will-change: text-shadow;
+}
+
+.logo-burst .logo-neon-pulse {
+  text-shadow:
+    0 0 14px rgba(255, 215, 0, 0.9),
+    0 0 28px rgba(255, 165, 0, 0.8),
+    0 0 42px rgba(255, 100, 0, 0.5);
+}
+
+/* LOGO: Усиленные glitch-эффекты (стиль Balatro Pokerfall) */
+@keyframes logo-glitch-burst {
+  0%,
+  88%,
+  100% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+  90% {
+    transform: translate(-2px, 2px);
+  }
+  91% {
+    transform: translate(3px, -2px);
+  }
+  92% {
+    transform: translate(-3px, 1px);
+    filter: contrast(1.08) saturate(1.12);
+  }
+  93% {
+    transform: translate(2px, -1px);
+  }
+  94% {
+    transform: translate(-2px, 0px);
+  }
+  95% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+}
+.animate-logo-glitch-burst {
+  animation: logo-glitch-burst 2.8s infinite steps(1, end);
+  will-change: transform, filter;
+}
+
+@keyframes logo-glitch-hit {
+  0% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+  20% {
+    transform: translate(-4px, 2px);
+  }
+  40% {
+    transform: translate(4px, -2px);
+  }
+  60% {
+    transform: translate(-3px, 1px);
+    filter: contrast(1.12) saturate(1.15);
+  }
+  80% {
+    transform: translate(3px, -1px);
+  }
+  100% {
+    transform: translate(0, 0);
+    filter: none;
+  }
+}
+
+.logo-burst .logo-inner {
+  animation: logo-glitch-hit 150ms steps(1, end);
+}
+
+/* LOGO: Обновлённые ghost-слои с новыми цветами (RGB-сдвиги для glitch) */
+.logo-ghost-1 {
+  color: rgba(255, 100, 150, 0.6) !important; /* розово-красный для RGB-сдвига */
+}
+.logo-ghost-2 {
+  color: rgba(100, 200, 255, 0.6) !important; /* голубой для RGB-сдвига */
+}
+
+.logo-burst .logo-ghost {
+  opacity: 0.7 !important;
 }
 
 /* Max Win Cinematic */

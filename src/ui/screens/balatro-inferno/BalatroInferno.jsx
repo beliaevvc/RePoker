@@ -458,21 +458,21 @@ function ResimpleLogo() {
       onPointerDown={triggerBurst}
     >
       <div className="relative animate-logo-glitch-burst max-w-full text-center logo-inner">
-        <span className="text-[clamp(18px,6vw,36px)] font-black tracking-[0.08em] sm:tracking-[0.1em] text-white/90 drop-shadow-[2px_2px_0_#000] select-none uppercase font-mono break-words">
-          RESIMPLE <span className="font-bold tracking-[0.3em] opacity-80">GAMES</span>
+        <span className="logo-neon-shimmer logo-neon-pulse text-[clamp(18px,6vw,36px)] font-black tracking-[0.08em] sm:tracking-[0.1em] select-none uppercase font-mono break-words drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
+          POKERFALL
         </span>
 
         <span
           className="absolute top-0 left-[-2px] logo-ghost logo-ghost-1 opacity-0 animate-glitch-text-1-burst mix-blend-screen text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full"
           aria-hidden="true"
         >
-          RESIMPLE <span className="font-bold tracking-[0.3em]">GAMES</span>
+          POKERFALL
         </span>
         <span
           className="absolute top-0 left-[2px] logo-ghost logo-ghost-2 opacity-0 animate-glitch-text-2-burst mix-blend-screen text-[clamp(18px,6vw,36px)] tracking-[0.08em] sm:tracking-[0.1em] font-black uppercase font-mono w-full"
           aria-hidden="true"
         >
-          RESIMPLE <span className="font-bold tracking-[0.3em]">GAMES</span>
+          POKERFALL
         </span>
       </div>
     </div>
