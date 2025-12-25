@@ -137,7 +137,7 @@
 
 ## Что сделано (текущая задача)
 
-### Rules Modal — ✅ Завершено
+### Rules Modal — ✅ Завершено и архивировано
 - [x] Creative-фаза завершена: структура и тексты правил утверждены (`memory-bank/creative/creative-rules-modal.md`)
 - [x] Добавлено состояние `rulesModalOpen` и `setRulesModalOpen` в `useBalatroInfernoController.js`
 - [x] Создан компонент `RulesModal.jsx` с 9 разделами правил на английском языке:
@@ -156,8 +156,13 @@
 - [x] Добавлена поддержка закрытия по Escape и клику на backdrop
 - [x] Проверка линтера: ошибок нет ✅
 - [x] Проверка сборки: проект собирается без ошибок (`npm run build`) ✅
+- [x] Рефлексия: создан файл `memory-bank/reflection/reflection-2025-01-rules-modal.md`
+- [x] Архивация: создан файл `memory-bank/archive/archive-2025-01-rules-modal.md`
+- [x] Ветка `guide` слита в `main` (fast-forward merge)
 
 ## Архив
+- `memory-bank/archive/archive-2025-01-rules-under-paytable.md` (перемещение кнопки RULES под PAYTABLE в HeaderBar2)
+- `memory-bank/archive/archive-2025-01-rules-modal.md` (модальное окно с правилами игры)
 - `memory-bank/archive/archive-2025-01-paytable-joker.md` (добавление информационного блока о джокерах в Paytable)
 
 ## Архив

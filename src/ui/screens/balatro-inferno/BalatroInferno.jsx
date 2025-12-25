@@ -178,7 +178,7 @@ const HeaderBar = memo(function HeaderBar({
         </div>
       ) : (
         <div className="w-full max-w-5xl px-3 sm:px-4 grid grid-cols-2 sm:grid-cols-3 items-center mt-2 sm:mt-3">
-          <div className="flex items-center gap-3 justify-self-start">
+          <div className="flex flex-col items-start gap-0 justify-self-start">
             <button
               type="button"
               onClick={openPaytable}
@@ -201,7 +201,7 @@ const HeaderBar = memo(function HeaderBar({
               type="button"
               onClick={openRules}
               className={[
-                'inline-flex items-center gap-2 h-7',
+                'inline-flex items-center gap-2 h-7 -mt-2',
                 'text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest',
                 'border-b border-transparent hover:border-slate-400 transition-all group',
               ].join(' ')}
