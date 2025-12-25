@@ -380,9 +380,18 @@ export function RulesModal({ open, onClose }) {
 
           {/* Section 9: TURBO Mode */}
           <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide">TURBO Mode</h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug">
-              The <span className="font-bold text-white">TURBO</span> button speeds up all game animations by <span className="text-yellow-400 font-bold">2×</span>. It affects card dealing speed and all cascade
+            <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide text-center">TURBO Mode</h3>
+            <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug text-center">
+              The{' '}
+              <button
+                disabled
+                className="inline-flex items-center justify-center h-5 px-2 bg-slate-700 border-b-[3px] border-slate-900 rounded transition-all mx-0.5"
+              >
+                <span className="text-[8px] font-bold tracking-wider text-slate-400">
+                  TURBO
+                </span>
+              </button>
+              {' '}button speeds up all game animations by <span className="text-yellow-400 font-bold">2×</span>. It affects card dealing speed and all cascade
               animations. You can toggle it on and off at any time.
             </p>
           </div>
