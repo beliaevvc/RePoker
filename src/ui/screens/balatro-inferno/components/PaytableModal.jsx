@@ -213,6 +213,28 @@ export function PaytableModal({ open, bet, onAdjustBet, onClose }) {
             </div>
           </div>
 
+          {/* Jokers info block */}
+          <div className="bg-slate-900/60 border border-purple-500/40 rounded-lg p-3 flex flex-col gap-2 relative overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_10%,rgba(168,85,247,0.14),transparent_55%),radial-gradient(circle_at_80%_90%,rgba(139,92,246,0.10),transparent_60%)]" />
+
+            <div className="relative flex flex-col items-center text-center gap-2">
+              <div className="text-xs sm:text-sm font-extrabold text-purple-300 uppercase tracking-wide">
+                JOKERS
+              </div>
+
+              <div className="flex items-center justify-center gap-2">
+                <MiniCard card={{ suit: 'joker', rank: 15 }} isJoker={true} isWinning={true} />
+                <MiniCard card={{ suit: 'joker', rank: 15 }} isJoker={true} isWinning={true} />
+              </div>
+
+              <div className="mt-1 text-[10px] sm:text-[11px] text-slate-300 leading-snug max-w-[44ch]">
+                Jokers act as wildcards and can replace any card to form winning combinations. The deck contains{' '}
+                <span className="text-purple-300 font-bold tracking-widest uppercase">2 JOKERS</span> (54 cards total: 52
+                standard + 2 jokers).
+              </div>
+            </div>
+          </div>
+
           {ORDERED_COMBOS.map((comboName) => {
             const multiplier = HAND_MULTIPLIERS[comboName] ?? 0
             const payout = bet * multiplier
