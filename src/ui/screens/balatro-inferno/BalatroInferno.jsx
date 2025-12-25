@@ -1071,7 +1071,7 @@ export default function BalatroInferno() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-[clamp(10px,2vh,24px)] w-full mt-auto mb-[clamp(52px,7.5vh,130px)]">
+          <div className="flex flex-col items-center gap-[clamp(10px,2vh,24px)] w-full mt-auto mb-[clamp(52px,7.5vh,130px)] hand-board-container-adaptive">
             <HandBoard
               hand={hand}
               tier={tier}
