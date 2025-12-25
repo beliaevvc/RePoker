@@ -92,9 +92,30 @@ export function RulesModal({ open, onClose }) {
           <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 flex flex-col gap-2">
             <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wide">Betting & Balance</h3>
             <p className="text-[10px] sm:text-[11px] text-slate-300 leading-snug">
-              Starting balance: <span className="text-emerald-400 font-bold">100 chips</span>. Your bet is deducted at the start of each deal. Winnings are paid out as a
+              Your bet is deducted at the start of each deal. Winnings are paid out as a
               single payment at the end of the cascade. Available bet amounts range from 0.2 to 100.
             </p>
+            {/* CHIPS and ANTE display */}
+            <div className="flex items-center justify-between gap-2 mt-2">
+              {/* CHIPS */}
+              <div className="bg-[#1e293b] border-l-2 border-blue-500 pl-1.5 pr-2 py-1 rounded-r-lg shadow-md skew-x-[-10deg] flex-1 min-w-0">
+                <div className="text-[6px] text-blue-300 uppercase tracking-[0.15em] skew-x-[10deg]">
+                  CHIPS
+                </div>
+                <div className="text-[10px] text-white skew-x-[10deg] truncate">
+                  $99.20
+                </div>
+              </div>
+              {/* ANTE */}
+              <div className="bg-[#1e293b] border-r-2 border-red-500 pr-1.5 pl-2 py-1 rounded-l-lg shadow-md skew-x-[-10deg] flex-1 min-w-0">
+                <div className="text-[6px] text-red-300 uppercase tracking-[0.15em] skew-x-[10deg] text-right">
+                  ANTE
+                </div>
+                <div className="text-[10px] text-white skew-x-[10deg] text-right truncate">
+                  $1.00
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Section 3: CASCADE Mode */}
